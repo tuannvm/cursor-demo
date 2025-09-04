@@ -1,0 +1,26 @@
+# GitHub Labels Configuration
+# Use with: gh label sync --file .github/labels.yml
+
+- name: "trd-generated"
+  description: "Issue created from Technical Requirements Document"
+  color: "0052CC"
+
+- name: "planning"
+  description: "Planning phase issue"
+  color: "D4EDDA"
+
+- name: "implementation" 
+  description: "Implementation phase issue"
+  color: "FFF3CD"
+
+- name: "testing"
+  description: "Testing phase issue"
+  color: "F8D7DA"
+
+- name: "ready-to-implement"
+  description: "Issue ready for automatic implementation"
+  color: "28A745"
+
+- name: "needs-review"
+  description: "Requires manual review"
+  color: "6F42C1"
