@@ -81,20 +81,29 @@ jobs:
         
         # Run cursor agent with GitHub MCP server
         cursor-agent -p "
-        I need you to analyze TRD documents and create GitHub issues using the GitHub MCP server.
+        CRITICAL: You must use GitHub MCP server functions to CREATE ACTUAL GITHUB ISSUES, not files or templates.
         
-        Repository Owner: $REPO_OWNER
-        Repository Name: $REPO_NAME
+        Repository: $REPO_OWNER/$REPO_NAME
         
-        TRD Content:
+        TRD Content to analyze:
         $TRD_CONTENT
         
-        For each major requirement found in the TRD content:
-        1. Use the github MCP server's create_issue function with owner='$REPO_OWNER', repo='$REPO_NAME' to create a planning issue with labels: ['trd-generated', 'planning']
-        2. Use the github MCP server's create_issue function with owner='$REPO_OWNER', repo='$REPO_NAME' to create an implementation issue with labels: ['trd-generated', 'implementation'] 
-        3. Use the github MCP server's create_issue function with owner='$REPO_OWNER', repo='$REPO_NAME' to create a testing issue with labels: ['trd-generated', 'testing']
+        WORKFLOW:
+        1. Analyze the TRD content and determine what GitHub issues need to be created
+        2. Present your planned issues (titles, types, descriptions) 
+        3. Use GitHub MCP server create_issue function to create all issues in one efficient batch
         
-        For each created issue, output exactly: 'CREATED_ISSUE_URL: https://github.com/$REPO_OWNER/$REPO_NAME/issues/NUMBER'
+        ISSUE CREATION GUIDELINES:
+        - Create appropriate issue types based on the TRD content (planning, implementation, testing, documentation, etc.)
+        - Use descriptive titles that reflect the actual requirements
+        - Include detailed descriptions from the TRD context
+        - Add appropriate labels: ['trd-generated'] plus type-specific labels like ['planning', 'implementation', 'testing']
+        - Parameters for each create_issue call: owner='$REPO_OWNER', repo='$REPO_NAME'
+        
+        OUTPUT REQUIREMENT:
+        After creating each issue, output: 'CREATED_ISSUE_URL: [actual_github_issue_url]'
+        
+        DO NOT create files, templates, or write code. ONLY use GitHub MCP server create_issue function calls.
         " 2>&1 | tee cursor_output.log
         
         # Extract issue URLs from cursor output and comment on PR
