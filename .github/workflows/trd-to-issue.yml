@@ -16,9 +16,6 @@ jobs:
     steps:
     - name: Checkout PR
       uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        ref: refs/pull/${{ github.event.issue.number }}/head
       
     - name: Install Cursor CLI
       run: |
@@ -81,29 +78,32 @@ jobs:
         
         # Run cursor agent with GitHub MCP server
         cursor-agent -p "
-        CRITICAL: You must use GitHub MCP server functions to CREATE ACTUAL GITHUB ISSUES, not files or templates.
+        STOP! You are NOT allowed to create files, write code, or generate templates. 
         
-        Repository: $REPO_OWNER/$REPO_NAME
+        You MUST use the GitHub MCP server to create LIVE GitHub issues in this repository: $REPO_OWNER/$REPO_NAME
         
-        TRD Content to analyze:
-        $TRD_CONTENT
+        TRD to analyze: $TRD_CONTENT
         
-        WORKFLOW:
-        1. Analyze the TRD content and determine what GitHub issues need to be created
-        2. Present your planned issues (titles, types, descriptions) 
-        3. Use GitHub MCP server create_issue function to create all issues in one efficient batch
+        MANDATORY ACTIONS:
+        1. Use GitHub MCP server create_issue function calls ONLY
+        2. Each call creates ONE real GitHub issue in the live repository
+        3. Function parameters: owner='$REPO_OWNER', repo='$REPO_NAME', title='Issue Title', body='Issue Description', labels=['trd-generated', 'planning']
+        4. After each successful create_issue call, output: 'CREATED_ISSUE_URL: https://github.com/$REPO_OWNER/$REPO_NAME/issues/NUMBER'
         
-        ISSUE CREATION GUIDELINES:
-        - Create appropriate issue types based on the TRD content (planning, implementation, testing, documentation, etc.)
-        - Use descriptive titles that reflect the actual requirements
-        - Include detailed descriptions from the TRD context
-        - Add appropriate labels: ['trd-generated'] plus type-specific labels like ['planning', 'implementation', 'testing']
-        - Parameters for each create_issue call: owner='$REPO_OWNER', repo='$REPO_NAME'
+        EXAMPLE MCP CALL:
+        create_issue(owner='$REPO_OWNER', repo='$REPO_NAME', title='[PLANNING] LEGO Block System', body='Planning phase for LEGO block system implementation...', labels=['trd-generated', 'planning'])
         
-        OUTPUT REQUIREMENT:
-        After creating each issue, output: 'CREATED_ISSUE_URL: [actual_github_issue_url]'
+        FORBIDDEN:
+        - Do NOT write files
+        - Do NOT create templates  
+        - Do NOT generate code
+        - Do NOT use Write, Edit, or any file tools
         
-        DO NOT create files, templates, or write code. ONLY use GitHub MCP server create_issue function calls.
+        REQUIRED:
+        - Call GitHub MCP create_issue function for each issue
+        - Use exact function name: create_issue
+        - Include owner, repo, title, body, and labels parameters
+        - Generate real issues that appear in GitHub UI
         " 2>&1 | tee cursor_output.log
         
         # Extract issue URLs from cursor output and comment on PR
