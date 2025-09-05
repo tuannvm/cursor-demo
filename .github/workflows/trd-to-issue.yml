@@ -35,7 +35,15 @@ jobs:
         REPO_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
         REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
         
-        cursor-agent --model sonnet-4 -f --output-format text -p "Find TRD files (.md or .txt) in docs/ directory and current directory, analyze their technical requirements, and for each major feature create a GitHub issue using: gh issue create --title '[PLANNING] Feature Name' --body 'Description' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Read files with cat, head, or similar shell commands." 2>&1 | tee cursor_output.log
+        # Get TRD files that changed in this PR
+        TRD_FILES=$(gh pr diff ${{ github.event.issue.number }} --name-only | grep -E '\.(md|txt)$' || echo "")
+        
+        if [ -z "$TRD_FILES" ]; then
+          echo "No TRD files found in PR diff"
+          exit 0
+        fi
+        
+        cursor-agent --model sonnet-4 -f --output-format text -p "Read these TRD files that were modified in the PR: $TRD_FILES. Thoroughly analyze the complete technical requirements and create a comprehensive GitHub issue for EVERY major feature, component, and requirement mentioned in these TRDs. Do not create sample issues - create actual issues for all requirements. Use: gh issue create --title '[PLANNING] Feature Name' --body 'Detailed description with acceptance criteria' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Read files with cat, head, or similar shell commands." 2>&1 | tee cursor_output.log
 
     - name: Report Results
       if: always()
