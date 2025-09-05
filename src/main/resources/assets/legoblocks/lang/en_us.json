@@ -1,0 +1,8 @@
+{
+  "block.legoblocks.lego_brick_1x1": "LEGO Brick 1x1",
+  "block.legoblocks.lego_brick_2x2": "LEGO Brick 2x2",
+  "block.legoblocks.lego_brick_2x4": "LEGO Brick 2x4",
+  "block.legoblocks.lego_brick_slope": "LEGO Slope Brick",
+  "block.legoblocks.lego_brick_corner": "LEGO Corner Brick",
+  "itemGroup.legoblocks": "LEGO Blocks"
+}

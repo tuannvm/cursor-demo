@@ -1,0 +1,929 @@
+I'll help you implement GitHub issue 34. Let me start by reading the issue details and understanding the requirements.
+$ gh issue view 34 (exit 0)
+Now let me explore the codebase to understand the current structure and identify where to implement the custom rendering system.
+Listed .
+
+Searched files (*.java)
+
+Searched files (*.json)
+
+Searched files (**/render/**)
+Let me check what files exist in the current directory:
+$ find . -type f -name "*.java" -o -name "*.json" -o -name "*.md" | head -20 (exit 0)
+Let me explore the project structure more thoroughly:
+$ ls -la (exit 0)
+
+$ cat README.md (exit 0)
+
+$ cat IMPLEMENTATION.md (exit 0)
+Now I understand this is a TRD-to-GitHub-Issues automation project, and I need to implement a custom rendering system for LEGO blocks in Minecraft. Let me create a proper project structure for a Minecraft mod with the custom rendering system.
+$ gh issue comment 34 --body 'Progress update: Starting implementation of custom LEGO block rendering system. Creating project structure and analyzing requirements.' (exit 0)
+Now let me create the Minecraft mod project structure for the LEGO block rendering system:Let me create the directory structure first:
+$ mkdir -p src/main/java/com/legoblocks/renderer/{block,client/render,init,tileentity} (exit 0)
+
+$ mkdir -p src/main/resources/{META-INF,assets/legoblocks/{models/block,textures/blocks,lang}} (exit 0)
+Now let me create the project files:
+$ cat > build.gradle << 'EOF'
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '5.1.+'
+}
+
+version = '1.0.0'
+group = 'com.legoblocks.render'
+archivesBaseName = 'lego-blocks-renderer'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.19.2'
+    
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                legoblocks {
+                    source sourceSets.main
+                }
+            }
+        }
+        
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                legoblocks {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'Minecraft Forge'
+        url = 'https://maven.minecraftforge.net'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.19.2-43.2.0'
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "LEGO Blocks Renderer",
+            "Specification-Vendor": "LegoBlocks",
+            "Specification-Version": "1",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" :"LegoBlocks",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+EOF (exit 0)
+
+$ cat > src/main/resources/META-INF/mods.toml << 'EOF'
+modLoader="javafml"
+loaderVersion="[43,)"
+license="MIT"
+issueTrackerURL="https://github.com/legoblocks/renderer/issues"
+
+[[mods]]
+modId="legoblocks"
+version="${file.jarVersion}"
+displayName="LEGO Blocks Renderer"
+description='''Custom rendering system for LEGO-style blocks in Minecraft with proper non-cube shapes and aesthetics.'''
+credits="LegoBlocks Team"
+authors="LegoBlocks Team"
+displayURL="https://github.com/legoblocks/renderer"
+
+[[dependencies.legoblocks]]
+modId="forge"
+mandatory=true
+versionRange="[43,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.legoblocks]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.19.2,1.20)"
+ordering="NONE"
+side="BOTH"
+EOF (exit 0)
+Now let me create the main mod class:
+$ cat > src/main/java/com/legoblocks/renderer/LegoBlocksMod.java << 'EOF'
+package com.legoblocks.renderer;
+
+import com.legoblocks.renderer.init.ModBlocks;
+import com.legoblocks.renderer.init.ModTileEntities;
+import com.legoblocks.renderer.client.render.LegoBlockRenderer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
+@Mod(LegoBlocksMod.MODID)
+public class LegoBlocksMod {
+    public static final String MODID = "legoblocks";
+    
+    public LegoBlocksMod() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        
+        // Register our stuff
+        ModBlocks.register(modEventBus);
+        ModTileEntities.register(modEventBus);
+        
+        modEventBus.addListener(this::clientSetup);
+    }
+    
+    private void clientSetup(final FMLClientSetupEvent event) {
+        // Set render layers for our blocks
+        ItemBlockRenderTypes.setRenderLayer(ModBlocks.LEGO_BRICK_1X1.get(), RenderType.solid());
+        ItemBlockRenderTypes.setRenderLayer(ModBlocks.LEGO_BRICK_2X2.get(), RenderType.solid());
+        ItemBlockRenderTypes.setRenderLayer(ModBlocks.LEGO_BRICK_2X4.get(), RenderType.solid());
+    }
+    
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ClientModEvents {
+        @SubscribeEvent
+        public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerBlockEntityRenderer(ModTileEntities.LEGO_BLOCK_TILE_ENTITY.get(),
+                    LegoBlockRenderer::new);
+        }
+    }
+}
+EOF (exit 0)
+Now let me create the block initialization class:
+$ cat > src/main/java/com/legoblocks/renderer/init/ModBlocks.java << 'EOF'
+package com.legoblocks.renderer.init;
+
+import com.legoblocks.renderer.LegoBlocksMod;
+import com.legoblocks.renderer.block.LegoBlock;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+import java.util.function.Supplier;
+
+public class ModBlocks {
+    public static final DeferredRegister<Block> BLOCKS =
+            DeferredRegister.create(ForgeRegistries.BLOCKS, LegoBlocksMod.MODID);
+
+    public static final DeferredRegister<Item> ITEMS =
+            DeferredRegister.create(ForgeRegistries.ITEMS, LegoBlocksMod.MODID);
+
+    public static final RegistryObject<Block> LEGO_BRICK_1X1 = registerBlock("lego_brick_1x1",
+            () -> new LegoBlock(BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(2.0f, 3.0f), LegoBlock.BrickType.BRICK_1X1));
+
+    public static final RegistryObject<Block> LEGO_BRICK_2X2 = registerBlock("lego_brick_2x2",
+            () -> new LegoBlock(BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(2.0f, 3.0f), LegoBlock.BrickType.BRICK_2X2));
+
+    public static final RegistryObject<Block> LEGO_BRICK_2X4 = registerBlock("lego_brick_2x4",
+            () -> new LegoBlock(BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(2.0f, 3.0f), LegoBlock.BrickType.BRICK_2X4));
+
+    public static final RegistryObject<Block> LEGO_BRICK_SLOPE = registerBlock("lego_brick_slope",
+            () -> new LegoBlock(BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(2.0f, 3.0f), LegoBlock.BrickType.SLOPE));
+
+    public static final RegistryObject<Block> LEGO_BRICK_CORNER = registerBlock("lego_brick_corner",
+            () -> new LegoBlock(BlockBehaviour.Properties.of(Material.STONE)
+                    .strength(2.0f, 3.0f), LegoBlock.BrickType.CORNER));
+
+    private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
+        RegistryObject<T> toReturn = BLOCKS.register(name, block);
+        registerBlockItem(name, toReturn);
+        return toReturn;
+    }
+
+    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
+        return ITEMS.register(name, () -> new BlockItem(block.get(),
+                new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+    }
+
+    public static void register(IEventBus eventBus) {
+        BLOCKS.register(eventBus);
+        ITEMS.register(eventBus);
+    }
+}
+EOF (exit 0)
+Now let me create the LegoBlock class:
+$ cat > src/main/java/com/legoblocks/renderer/block/LegoBlock.java << 'EOF'
+package com.legoblocks.renderer.block;
+
+import com.legoblocks.renderer.init.ModTileEntities;
+import com.legoblocks.renderer.tileentity.LegoBlockTileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+
+import javax.annotation.Nullable;
+
+public class LegoBlock extends BaseEntityBlock {
+    private final BrickType brickType;
+    
+    // Define collision shapes for different brick types
+    private static final VoxelShape SHAPE_1X1 = Shapes.join(
+            Shapes.box(0.0625, 0, 0.0625, 0.9375, 0.6, 0.9375), // Base
+            Shapes.box(0.25, 0.6, 0.25, 0.75, 0.9, 0.75), // Stud
+            BooleanOp.OR);
+    
+    private static final VoxelShape SHAPE_2X2 = Shapes.join(
+            Shapes.box(0, 0, 0, 1, 0.6, 1), // Base
+            Shapes.join(
+                Shapes.box(0.125, 0.6, 0.125, 0.375, 0.9, 0.375), // Stud 1
+                Shapes.join(
+                    Shapes.box(0.625, 0.6, 0.125, 0.875, 0.9, 0.375), // Stud 2
+                    Shapes.join(
+                        Shapes.box(0.125, 0.6, 0.625, 0.375, 0.9, 0.875), // Stud 3
+                        Shapes.box(0.625, 0.6, 0.625, 0.875, 0.9, 0.875), // Stud 4
+                        BooleanOp.OR), BooleanOp.OR), BooleanOp.OR),
+            BooleanOp.OR);
+    
+    private static final VoxelShape SHAPE_2X4 = Shapes.join(
+            Shapes.box(0, 0, 0, 1, 0.6, 2), // Base (extends to z=2)
+            createStudsForShape(2, 4), // 2x4 studs
+            BooleanOp.OR);
+    
+    private static final VoxelShape SHAPE_SLOPE = Shapes.join(
+            Shapes.box(0, 0, 0, 1, 0.3, 1), // Lower base
+            Shapes.box(0, 0.3, 0.5, 1, 0.6, 1), // Upper half
+            BooleanOp.OR);
+    
+    private static final VoxelShape SHAPE_CORNER = Shapes.join(
+            Shapes.box(0, 0, 0, 1, 0.6, 1), // Base
+            Shapes.box(0.125, 0.6, 0.125, 0.375, 0.9, 0.375), // Corner stud
+            BooleanOp.OR);
+
+    public enum BrickType {
+        BRICK_1X1, BRICK_2X2, BRICK_2X4, SLOPE, CORNER
+    }
+
+    public LegoBlock(Properties properties, BrickType brickType) {
+        super(properties);
+        this.brickType = brickType;
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED; // Use tile entity renderer
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
+        return switch (brickType) {
+            case BRICK_1X1 -> SHAPE_1X1;
+            case BRICK_2X2 -> SHAPE_2X2;
+            case BRICK_2X4 -> SHAPE_2X4;
+            case SLOPE -> SHAPE_SLOPE;
+            case CORNER -> SHAPE_CORNER;
+        };
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new LegoBlockTileEntity(pos, state, brickType);
+    }
+
+    public BrickType getBrickType() {
+        return brickType;
+    }
+
+    private static VoxelShape createStudsForShape(int width, int length) {
+        VoxelShape shape = Shapes.empty();
+        double studSize = 0.25;
+        double studHeight = 0.3;
+        double studSpacing = 0.5;
+        
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < length; j++) {
+                double x1 = 0.125 + i * studSpacing;
+                double z1 = 0.125 + j * studSpacing;
+                double x2 = x1 + studSize;
+                double z2 = z1 + studSize;
+                
+                VoxelShape stud = Shapes.box(x1, 0.6, z1, x2, 0.6 + studHeight, z2);
+                shape = Shapes.join(shape, stud, BooleanOp.OR);
+            }
+        }
+        
+        return shape;
+    }
+}
+EOF (exit 0)
+Now let me create the tile entity classes:
+$ cat > src/main/java/com/legoblocks/renderer/init/ModTileEntities.java << 'EOF'
+package com.legoblocks.renderer.init;
+
+import com.legoblocks.renderer.LegoBlocksMod;
+import com.legoblocks.renderer.tileentity.LegoBlockTileEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+public class ModTileEntities {
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, LegoBlocksMod.MODID);
+
+    public static final RegistryObject<BlockEntityType<LegoBlockTileEntity>> LEGO_BLOCK_TILE_ENTITY =
+            BLOCK_ENTITIES.register("lego_block", () ->
+                    BlockEntityType.Builder.of(LegoBlockTileEntity::new,
+                            ModBlocks.LEGO_BRICK_1X1.get(),
+                            ModBlocks.LEGO_BRICK_2X2.get(),
+                            ModBlocks.LEGO_BRICK_2X4.get(),
+                            ModBlocks.LEGO_BRICK_SLOPE.get(),
+                            ModBlocks.LEGO_BRICK_CORNER.get()).build(null));
+
+    public static void register(IEventBus eventBus) {
+        BLOCK_ENTITIES.register(eventBus);
+    }
+}
+EOF (exit 0)
+
+$ cat > src/main/java/com/legoblocks/renderer/tileentity/LegoBlockTileEntity.java << 'EOF'
+package com.legoblocks.renderer.tileentity;
+
+import com.legoblocks.renderer.block.LegoBlock;
+import com.legoblocks.renderer.init.ModTileEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+
+public class LegoBlockTileEntity extends BlockEntity {
+    private LegoBlock.BrickType brickType;
+    private int color = 0xFF0000; // Default red color
+    private float rotationY = 0.0f;
+    private boolean hasDetailedModel = true;
+
+    public LegoBlockTileEntity(BlockPos pos, BlockState state) {
+        super(ModTileEntities.LEGO_BLOCK_TILE_ENTITY.get(), pos, state);
+        if (state.getBlock() instanceof LegoBlock legoBlock) {
+            this.brickType = legoBlock.getBrickType();
+        }
+    }
+
+    public LegoBlockTileEntity(BlockPos pos, BlockState state, LegoBlock.BrickType brickType) {
+        super(ModTileEntities.LEGO_BLOCK_TILE_ENTITY.get(), pos, state);
+        this.brickType = brickType;
+    }
+
+    @Override
+    public void load(CompoundTag compound) {
+        super.load(compound);
+        this.color = compound.getInt("Color");
+        this.rotationY = compound.getFloat("RotationY");
+        this.hasDetailedModel = compound.getBoolean("DetailedModel");
+        if (compound.contains("BrickType")) {
+            this.brickType = LegoBlock.BrickType.valueOf(compound.getString("BrickType"));
+        }
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag compound) {
+        super.saveAdditional(compound);
+        compound.putInt("Color", this.color);
+        compound.putFloat("RotationY", this.rotationY);
+        compound.putBoolean("DetailedModel", this.hasDetailedModel);
+        if (this.brickType != null) {
+            compound.putString("BrickType", this.brickType.name());
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag compound = super.getUpdateTag();
+        saveAdditional(compound);
+        return compound;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    // Getters and setters
+    public LegoBlock.BrickType getBrickType() {
+        return brickType;
+    }
+
+    public void setBrickType(LegoBlock.BrickType brickType) {
+        this.brickType = brickType;
+        setChanged();
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+        setChanged();
+    }
+
+    public float getRotationY() {
+        return rotationY;
+    }
+
+    public void setRotationY(float rotationY) {
+        this.rotationY = rotationY;
+        setChanged();
+    }
+
+    public boolean hasDetailedModel() {
+        return hasDetailedModel;
+    }
+
+    public void setDetailedModel(boolean hasDetailedModel) {
+        this.hasDetailedModel = hasDetailedModel;
+        setChanged();
+    }
+}
+EOF (exit 0)
+Now let me create the custom renderer class:
+$ cat > src/main/java/com/legoblocks/renderer/client/render/LegoBlockRenderer.java << 'EOF'
+package com.legoblocks.renderer.client.render;
+
+import com.legoblocks.renderer.block.LegoBlock;
+import com.legoblocks.renderer.tileentity.LegoBlockTileEntity;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+
+public class LegoBlockRenderer implements BlockEntityRenderer<LegoBlockTileEntity> {
+    
+    private static final ResourceLocation LEGO_TEXTURE = new ResourceLocation("legoblocks", "textures/blocks/lego_brick.png");
+    
+    public LegoBlockRenderer(BlockEntityRendererProvider.Context context) {
+    }
+
+    @Override
+    public void render(LegoBlockTileEntity tileEntity, float partialTicks, PoseStack poseStack, 
+                      MultiBufferSource bufferSource, int combinedLight, int combinedOverlay) {
+        
+        LegoBlock.BrickType brickType = tileEntity.getBrickType();
+        if (brickType == null) return;
+
+        poseStack.pushPose();
+        
+        // Apply rotation if any
+        if (tileEntity.getRotationY() != 0) {
+            poseStack.translate(0.5, 0, 0.5);
+            poseStack.mulPose(Vector3f.YP.rotationDegrees(tileEntity.getRotationY()));
+            poseStack.translate(-0.5, 0, -0.5);
+        }
+
+        VertexConsumer vertexBuilder = bufferSource.getBuffer(RenderType.solid());
+        
+        // Get color
+        int color = tileEntity.getColor();
+        float red = ((color >> 16) & 0xFF) / 255.0f;
+        float green = ((color >> 8) & 0xFF) / 255.0f;
+        float blue = (color & 0xFF) / 255.0f;
+        float alpha = 1.0f;
+
+        // Render based on brick type
+        switch (brickType) {
+            case BRICK_1X1 -> renderBrick1x1(poseStack, vertexBuilder, red, green, blue, alpha, combinedLight, combinedOverlay);
+            case BRICK_2X2 -> renderBrick2x2(poseStack, vertexBuilder, red, green, blue, alpha, combinedLight, combinedOverlay);
+            case BRICK_2X4 -> renderBrick2x4(poseStack, vertexBuilder, red, green, blue, alpha, combinedLight, combinedOverlay);
+            case SLOPE -> renderSlope(poseStack, vertexBuilder, red, green, blue, alpha, combinedLight, combinedOverlay);
+            case CORNER -> renderCorner(poseStack, vertexBuilder, red, green, blue, alpha, combinedLight, combinedOverlay);
+        }
+
+        poseStack.popPose();
+    }
+
+    private void renderBrick1x1(PoseStack poseStack, VertexConsumer builder, float r, float g, float b, float a, int light, int overlay) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        
+        // Render base brick body
+        renderCube(matrix, normalMatrix, builder, 0.0625f, 0, 0.0625f, 0.9375f, 0.6f, 0.9375f, r, g, b, a, light, overlay);
+        
+        // Render stud
+        renderCylinder(matrix, normalMatrix, builder, 0.25f, 0.6f, 0.25f, 0.75f, 0.9f, 0.75f, r, g, b, a, light, overlay);
+    }
+
+    private void renderBrick2x2(PoseStack poseStack, VertexConsumer builder, float r, float g, float b, float a, int light, int overlay) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        
+        // Render base brick body
+        renderCube(matrix, normalMatrix, builder, 0, 0, 0, 1, 0.6f, 1, r, g, b, a, light, overlay);
+        
+        // Render 4 studs in 2x2 pattern
+        float studSize = 0.25f;
+        float studSpacing = 0.5f;
+        float studHeight = 0.3f;
+        
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                float x1 = 0.125f + i * studSpacing;
+                float z1 = 0.125f + j * studSpacing;
+                float x2 = x1 + studSize;
+                float z2 = z1 + studSize;
+                
+                renderCylinder(matrix, normalMatrix, builder, x1, 0.6f, z1, x2, 0.6f + studHeight, z2, r, g, b, a, light, overlay);
+            }
+        }
+    }
+
+    private void renderBrick2x4(PoseStack poseStack, VertexConsumer builder, float r, float g, float b, float a, int light, int overlay) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        
+        // Render base brick body (2x4 means 2 wide, 4 long)
+        renderCube(matrix, normalMatrix, builder, 0, 0, 0, 1, 0.6f, 2, r, g, b, a, light, overlay);
+        
+        // Render 8 studs in 2x4 pattern
+        float studSize = 0.25f;
+        float studSpacing = 0.5f;
+        float studHeight = 0.3f;
+        
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 4; j++) {
+                float x1 = 0.125f + i * studSpacing;
+                float z1 = 0.125f + j * studSpacing;
+                float x2 = x1 + studSize;
+                float z2 = z1 + studSize;
+                
+                renderCylinder(matrix, normalMatrix, builder, x1, 0.6f, z1, x2, 0.6f + studHeight, z2, r, g, b, a, light, overlay);
+            }
+        }
+    }
+
+    private void renderSlope(PoseStack poseStack, VertexConsumer builder, float r, float g, float b, float a, int light, int overlay) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        
+        // Render sloped brick - lower section
+        renderCube(matrix, normalMatrix, builder, 0, 0, 0, 1, 0.3f, 1, r, g, b, a, light, overlay);
+        
+        // Render upper sloped section
+        renderCube(matrix, normalMatrix, builder, 0, 0.3f, 0.5f, 1, 0.6f, 1, r, g, b, a, light, overlay);
+        
+        // Render sloped face (connect lower front to upper back)
+        renderSlopedFace(matrix, normalMatrix, builder, r, g, b, a, light, overlay);
+        
+        // Single stud on the flat top
+        renderCylinder(matrix, normalMatrix, builder, 0.25f, 0.6f, 0.625f, 0.75f, 0.9f, 0.875f, r, g, b, a, light, overlay);
+    }
+
+    private void renderCorner(PoseStack poseStack, VertexConsumer builder, float r, float g, float b, float a, int light, int overlay) {
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        
+        // Render base corner piece
+        renderCube(matrix, normalMatrix, builder, 0, 0, 0, 1, 0.6f, 1, r, g, b, a, light, overlay);
+        
+        // Single corner stud
+        renderCylinder(matrix, normalMatrix, builder, 0.125f, 0.6f, 0.125f, 0.375f, 0.9f, 0.375f, r, g, b, a, light, overlay);
+    }
+
+    private void renderCube(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                           float x1, float y1, float z1, float x2, float y2, float z2, 
+                           float r, float g, float b, float a, int light, int overlay) {
+        
+        // Bottom face (y = y1)
+        addQuad(matrix, normalMatrix, builder, x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, 
+               0, -1, 0, r, g, b, a, light, overlay);
+        
+        // Top face (y = y2)
+        addQuad(matrix, normalMatrix, builder, x1, y2, z1, x1, y2, z2, x2, y2, z2, x2, y2, z1, 
+               0, 1, 0, r, g, b, a, light, overlay);
+        
+        // North face (z = z1)
+        addQuad(matrix, normalMatrix, builder, x1, y1, z1, x1, y2, z1, x2, y2, z1, x2, y1, z1, 
+               0, 0, -1, r, g, b, a, light, overlay);
+        
+        // South face (z = z2)
+        addQuad(matrix, normalMatrix, builder, x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, 
+               0, 0, 1, r, g, b, a, light, overlay);
+        
+        // West face (x = x1)
+        addQuad(matrix, normalMatrix, builder, x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, 
+               -1, 0, 0, r, g, b, a, light, overlay);
+        
+        // East face (x = x2)
+        addQuad(matrix, normalMatrix, builder, x2, y1, z1, x2, y2, z1, x2, y2, z2, x2, y1, z2, 
+               1, 0, 0, r, g, b, a, light, overlay);
+    }
+
+    private void renderCylinder(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                               float x1, float y1, float z1, float x2, float y2, float z2, 
+                               float r, float g, float b, float a, int light, int overlay) {
+        // Simplified cylinder as octagon for performance
+        float centerX = (x1 + x2) / 2;
+        float centerZ = (z1 + z2) / 2;
+        float radius = (x2 - x1) / 2;
+        int segments = 8;
+        
+        for (int i = 0; i < segments; i++) {
+            float angle1 = (float) (2 * Math.PI * i / segments);
+            float angle2 = (float) (2 * Math.PI * (i + 1) / segments);
+            
+            float x1Cyl = centerX + radius * Mth.cos(angle1);
+            float z1Cyl = centerZ + radius * Mth.sin(angle1);
+            float x2Cyl = centerX + radius * Mth.cos(angle2);
+            float z2Cyl = centerZ + radius * Mth.sin(angle2);
+            
+            // Side face of cylinder segment
+            addQuad(matrix, normalMatrix, builder, x1Cyl, y1, z1Cyl, x1Cyl, y2, z1Cyl, 
+                   x2Cyl, y2, z2Cyl, x2Cyl, y1, z2Cyl, 
+                   Mth.cos((angle1 + angle2) / 2), 0, Mth.sin((angle1 + angle2) / 2), 
+                   r, g, b, a, light, overlay);
+        }
+        
+        // Top and bottom circles (simplified as octagons)
+        // Top face
+        for (int i = 0; i < segments; i++) {
+            float angle1 = (float) (2 * Math.PI * i / segments);
+            float angle2 = (float) (2 * Math.PI * (i + 1) / segments);
+            
+            float x1Cyl = centerX + radius * Mth.cos(angle1);
+            float z1Cyl = centerZ + radius * Mth.sin(angle1);
+            float x2Cyl = centerX + radius * Mth.cos(angle2);
+            float z2Cyl = centerZ + radius * Mth.sin(angle2);
+            
+            addTriangle(matrix, normalMatrix, builder, centerX, y2, centerZ, 
+                       x1Cyl, y2, z1Cyl, x2Cyl, y2, z2Cyl, 
+                       0, 1, 0, r, g, b, a, light, overlay);
+        }
+    }
+
+    private void renderSlopedFace(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                                 float r, float g, float b, float a, int light, int overlay) {
+        // Sloped face connecting front bottom to back top
+        addQuad(matrix, normalMatrix, builder, 0, 0.3f, 0, 1, 0.3f, 0, 1, 0.6f, 0.5f, 0, 0.6f, 0.5f, 
+               0, 0.6f, -0.8f, r, g, b, a, light, overlay); // Approximated normal
+    }
+
+    private void addQuad(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                        float x1, float y1, float z1, float x2, float y2, float z2, 
+                        float x3, float y3, float z3, float x4, float y4, float z4, 
+                        float nx, float ny, float nz, float r, float g, float b, float a, 
+                        int light, int overlay) {
+        addVertex(matrix, normalMatrix, builder, x1, y1, z1, 0, 0, nx, ny, nz, r, g, b, a, light, overlay);
+        addVertex(matrix, normalMatrix, builder, x2, y2, z2, 1, 0, nx, ny, nz, r, g, b, a, light, overlay);
+        addVertex(matrix, normalMatrix, builder, x3, y3, z3, 1, 1, nx, ny, nz, r, g, b, a, light, overlay);
+        addVertex(matrix, normalMatrix, builder, x4, y4, z4, 0, 1, nx, ny, nz, r, g, b, a, light, overlay);
+    }
+
+    private void addTriangle(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                           float x1, float y1, float z1, float x2, float y2, float z2, 
+                           float x3, float y3, float z3, float nx, float ny, float nz, 
+                           float r, float g, float b, float a, int light, int overlay) {
+        addVertex(matrix, normalMatrix, builder, x1, y1, z1, 0.5f, 0.5f, nx, ny, nz, r, g, b, a, light, overlay);
+        addVertex(matrix, normalMatrix, builder, x2, y2, z2, 0, 1, nx, ny, nz, r, g, b, a, light, overlay);
+        addVertex(matrix, normalMatrix, builder, x3, y3, z3, 1, 1, nx, ny, nz, r, g, b, a, light, overlay);
+        // Add a degenerate fourth vertex to complete the quad
+        addVertex(matrix, normalMatrix, builder, x3, y3, z3, 1, 1, nx, ny, nz, r, g, b, a, light, overlay);
+    }
+
+    private void addVertex(Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer builder, 
+                          float x, float y, float z, float u, float v, 
+                          float nx, float ny, float nz, float r, float g, float b, float a, 
+                          int light, int overlay) {
+        builder.vertex(matrix, x, y, z)
+               .color(r, g, b, a)
+               .uv(u, v)
+               .overlayCoords(overlay)
+               .uv2(light)
+               .normal(normalMatrix, nx, ny, nz)
+               .endVertex();
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(LegoBlockTileEntity tileEntity) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
+    }
+}
+EOF (exit 0)
+Now let me create the texture and language files:
+$ cat > src/main/resources/assets/legoblocks/textures/blocks/lego_brick.png.mcmeta << 'EOF'
+{
+  "animation": {
+    "interpolate": true,
+    "frametime": 20
+  }
+}
+EOF (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/lang/en_us.json << 'EOF'
+{
+  "block.legoblocks.lego_brick_1x1": "LEGO Brick 1x1",
+  "block.legoblocks.lego_brick_2x2": "LEGO Brick 2x2",
+  "block.legoblocks.lego_brick_2x4": "LEGO Brick 2x4",
+  "block.legoblocks.lego_brick_slope": "LEGO Slope Brick",
+  "block.legoblocks.lego_brick_corner": "LEGO Corner Brick",
+  "itemGroup.legoblocks": "LEGO Blocks"
+}
+EOF (exit 0)
+Now let me create block models:
+$ cat > src/main/resources/assets/legoblocks/models/block/lego_brick_1x1.json << 'EOF'
+{
+  "parent": "block/block",
+  "textures": {
+    "all": "legoblocks:blocks/lego_brick"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 9.6, 15],
+      "faces": {
+        "north": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "east": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "south": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "west": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "up": {"uv": [1, 1, 15, 15], "texture": "#all"},
+        "down": {"uv": [1, 1, 15, 15], "texture": "#all"}
+      }
+    },
+    {
+      "from": [4, 9.6, 4],
+      "to": [12, 14.4, 12],
+      "faces": {
+        "north": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "east": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "south": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "west": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "up": {"uv": [4, 4, 12, 12], "texture": "#all"}
+      }
+    }
+  ]
+}
+EOF (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/models/item/lego_brick_1x1.json << 'EOF'
+{
+  "parent": "legoblocks:block/lego_brick_1x1"
+}
+EOF (exit 1)
+
+$ mkdir -p src/main/resources/assets/legoblocks/models/item (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/models/item/lego_brick_1x1.json << 'EOF'
+{
+  "parent": "legoblocks:block/lego_brick_1x1"
+}
+EOF (exit 0)
+Let me create additional models for the other brick types:
+$ cat > src/main/resources/assets/legoblocks/models/block/lego_brick_2x2.json << 'EOF'
+{
+  "parent": "block/block",
+  "textures": {
+    "all": "legoblocks:blocks/lego_brick"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 9.6, 16],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 9.6], "texture": "#all"},
+        "east": {"uv": [0, 0, 16, 9.6], "texture": "#all"},
+        "south": {"uv": [0, 0, 16, 9.6], "texture": "#all"},
+        "west": {"uv": [0, 0, 16, 9.6], "texture": "#all"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#all"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#all"}
+      }
+    },
+    {
+      "from": [2, 9.6, 2],
+      "to": [6, 14.4, 6],
+      "faces": {
+        "north": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "east": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "south": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "west": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "up": {"uv": [2, 2, 6, 6], "texture": "#all"}
+      }
+    },
+    {
+      "from": [10, 9.6, 2],
+      "to": [14, 14.4, 6],
+      "faces": {
+        "north": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "east": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "south": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "west": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "up": {"uv": [10, 2, 14, 6], "texture": "#all"}
+      }
+    },
+    {
+      "from": [2, 9.6, 10],
+      "to": [6, 14.4, 14],
+      "faces": {
+        "north": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "east": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "south": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "west": {"uv": [2, 0, 6, 4.8], "texture": "#all"},
+        "up": {"uv": [2, 10, 6, 14], "texture": "#all"}
+      }
+    },
+    {
+      "from": [10, 9.6, 10],
+      "to": [14, 14.4, 14],
+      "faces": {
+        "north": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "east": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "south": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "west": {"uv": [10, 0, 14, 4.8], "texture": "#all"},
+        "up": {"uv": [10, 10, 14, 14], "texture": "#all"}
+      }
+    }
+  ]
+}
+EOF (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/models/item/lego_brick_2x2.json << 'EOF'
+{
+  "parent": "legoblocks:block/lego_brick_2x2"
+}
+EOF (exit 0)
+Now let me create block states:
+$ mkdir -p src/main/resources/assets/legoblocks/blockstates (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/blockstates/lego_brick_1x1.json << 'EOF'
+{
+  "variants": {
+    "": {
+      "model": "legoblocks:block/lego_brick_1x1"
+    }
+  }
+}
+EOF (exit 0)
+
+$ cat > src/main/resources/assets/legoblocks/blockstates/lego_brick_2x2.json << 'EOF'
+{
+  "variants": {
+    "": {
+      "model": "legoblocks:block/lego_brick_2x2"
+    }
+  }
+}
+EOF (exit 0)
+Let me commit the progress so far:

@@ -1,0 +1,31 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "all": "legoblocks:blocks/lego_brick"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 9.6, 15],
+      "faces": {
+        "north": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "east": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "south": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "west": {"uv": [1, 0, 15, 9.6], "texture": "#all"},
+        "up": {"uv": [1, 1, 15, 15], "texture": "#all"},
+        "down": {"uv": [1, 1, 15, 15], "texture": "#all"}
+      }
+    },
+    {
+      "from": [4, 9.6, 4],
+      "to": [12, 14.4, 12],
+      "faces": {
+        "north": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "east": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "south": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "west": {"uv": [4, 0, 12, 4.8], "texture": "#all"},
+        "up": {"uv": [4, 4, 12, 12], "texture": "#all"}
+      }
+    }
+  ]
+}
