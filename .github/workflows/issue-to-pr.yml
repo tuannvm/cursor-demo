@@ -40,34 +40,45 @@ jobs:
         REPO_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
         REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
         
-        # Run cursor agent to implement the issue requirements
-        cursor-agent --model sonnet-4 -f --output-format text -p "Read GitHub issue ${{ github.event.issue.number }} details using gh issue view command. Analyze the requirements and create/modify files as needed to implement the feature. After completing implementation, output 'IMPLEMENTATION_COMPLETE: Ready for PR creation'. Use shell commands freely to read files, understand codebase, and create implementation files." 2>&1 | tee cursor_implementation.log
+        # Create initial commit and PR early for transparency
+        echo "# Implementation in progress for issue #${{ github.event.issue.number }}" > IMPLEMENTATION.md
+        git add IMPLEMENTATION.md
+        git commit -m "Start implementation for issue #${{ github.event.issue.number }}"
+        git push -u origin "$branch_name"
         
-        # Push branch and create PR using GitHub CLI
-        if grep -q "IMPLEMENTATION_COMPLETE:" cursor_implementation.log; then
-          # Push the branch
-          git add .
-          git commit -m "Implement issue #${{ github.event.issue.number }}
-          
-          Auto-generated implementation from TRD requirements.
-          
-          Closes #${{ github.event.issue.number }}"
-          git push -u origin "$branch_name"
-          
-          # Create PR using GitHub CLI
-          PR_URL=$(gh pr create --title "Implement issue #${{ github.event.issue.number }}" \
-            --body "Auto-generated implementation for issue #${{ github.event.issue.number }}.
+        # Create draft PR immediately
+        PR_URL=$(gh pr create --title "🚧 WIP: Implement issue #${{ github.event.issue.number }}" \
+          --body "🚧 **Work in Progress** - Auto-generated implementation for issue #${{ github.event.issue.number }}.
 
-          This PR implements the requirements specified in the TRD-generated issue.
+        This PR implements the requirements specified in the TRD-generated issue.
+        
+        Progress will be updated with frequent commits.
+        
+        Closes #${{ github.event.issue.number }}" \
+          --label "trd-generated,implementation,work-in-progress" \
+          --base main \
+          --head "$branch_name" \
+          --draft \
+          --json url --jq .url)
+        
+        gh issue comment ${{ github.event.issue.number }} --body "🚧 Implementation started: $PR_URL"
+        
+        # Run cursor agent to implement the issue requirements
+        cursor-agent --model sonnet-4 -f --output-format text -p "Read GitHub issue ${{ github.event.issue.number }} details using gh issue view command. Analyze the requirements and create/modify files as needed to implement the feature. IMPORTANT: Make frequent commits with descriptive messages using 'git add . && git commit -m \"descriptive message\" && git push origin $branch_name' after each significant change. Provide progress updates by commenting on the issue with: gh issue comment ${{ github.event.issue.number }} --body 'Progress update: [what you are working on]'. After completing implementation, output 'IMPLEMENTATION_COMPLETE: Ready for PR creation'. Use shell commands freely to read files, understand codebase, and create implementation files." 2>&1 | tee cursor_implementation.log
+        
+        # Mark PR as ready for review
+        if grep -q "IMPLEMENTATION_COMPLETE:" cursor_implementation.log; then
+          # Final commit
+          git add .
+          git commit -m "Complete implementation for issue #${{ github.event.issue.number }}" || echo "No final changes to commit"
+          git push origin "$branch_name"
           
-          Closes #${{ github.event.issue.number }}" \
-            --label "trd-generated,implementation" \
-            --base main \
-            --head "$branch_name" \
-            --json url --jq .url)
+          # Mark PR as ready for review
+          gh pr ready "$PR_URL"
+          gh pr edit "$PR_URL" --title "Implement issue #${{ github.event.issue.number }}" --remove-label "work-in-progress"
           
-          gh issue comment ${{ github.event.issue.number }} --body "✅ Implementation PR created: $PR_URL"
+          gh issue comment ${{ github.event.issue.number }} --body "✅ Implementation complete and ready for review: $PR_URL"
         else
-          gh issue comment ${{ github.event.issue.number }} --body "❌ Implementation failed - Check workflow logs"
+          gh issue comment ${{ github.event.issue.number }} --body "❌ Implementation failed - Check workflow logs and PR: $PR_URL"
           exit 1
         fi
