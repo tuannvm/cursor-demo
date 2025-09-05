@@ -33,7 +33,7 @@ jobs:
         REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
         
         # Run cursor agent to analyze PR TRD files and create GitHub issues
-        cursor-agent --model sonnet-4-thinking -p prompt "Find TRD files (.md or .txt) in current directory, analyze their technical requirements, and for each major feature create a GitHub issue using: gh issue create --title '[PLANNING] Feature Name' --body 'Description' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Use only Bash tool and gh commands, no file writing." 2>&1 | tee cursor_output.log
+        cursor-agent --model sonnet-4 -p prompt "Find TRD files (.md or .txt) in current directory, analyze their technical requirements, and for each major feature create a GitHub issue using: gh issue create --title '[PLANNING] Feature Name' --body 'Description' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Use only Bash tool and gh commands, no file writing." 2>&1 | tee cursor_output.log
 
     - name: Report Results
       if: always()
