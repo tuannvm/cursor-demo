@@ -545,3 +545,1229 @@ interface InstructionParameters {
 This NLP pipeline design provides a robust foundation for understanding and processing natural language instructions in the Agent Mode feature, ensuring accurate interpretation and effective code generation.
 EOF (exit 0)
 Now let me commit this progress and update the todos.
+$ git add . && git commit -m "Add technical specification and NLP pipeline design documents
+
+- Created comprehensive technical specification for Agent Mode architecture
+- Defined core components, interfaces, and implementation strategy  
+- Added detailed NLP pipeline design with intent classification and entity extraction
+- Established performance requirements and quality metrics
+- Documented processing flow and error handling strategies" && git push origin implement-issue-54-1757045756 (exit 0)
+Now let me create the UI/UX mockups and designs. I'll create a comprehensive design document with detailed mockups.
+$ cat > docs/ui-ux-design-mockups.md << 'EOF'
+# Agent Mode UI/UX Design & Mockups
+
+## 1. Design Principles
+
+### 1.1 Core Design Philosophy
+- **Minimalist Interface**: Clean, distraction-free design that focuses on code generation
+- **Contextual Awareness**: UI adapts based on current context and user intent
+- **Progressive Disclosure**: Show information progressively to avoid overwhelming users
+- **Immediate Feedback**: Real-time feedback and progress indicators throughout the process
+- **Accessibility First**: Fully accessible design following WCAG 2.1 AA standards
+
+### 1.2 Design Goals
+- Seamless integration with existing VS Code interface
+- Intuitive natural language input experience
+- Clear visualization of AI processing states
+- Effective presentation of generated code options
+- Smooth transition between different interaction modes
+
+## 2. User Interface Components
+
+### 2.1 Agent Mode Trigger
+
+#### 2.1.1 Hotkey Activation (Ctrl+I)
+```
+┌─────────────────────────────────────────────────────┐
+│ Current VS Code Editor                              │
+│                                                     │
+│ function calculateTotal(items) {                    │
+│   // User presses Ctrl+I here ▼                   │
+│   █                                                 │
+│ }                                                   │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 🤖 Agent Mode Activated                        │ │
+│ │ ═══════════════════════════════════════════════ │ │
+│ │                                                 │ │
+│ │ 💬 What would you like me to help you with?   │ │
+│ │                                                 │ │
+│ │ ┌─────────────────────────────────────────────┐ │ │
+│ │ │ Type your instruction here...               │ │ │
+│ │ └─────────────────────────────────────────────┘ │ │
+│ │                                                 │ │
+│ │ 💡 Examples:                                   │ │
+│ │ • "Add error handling to this function"        │ │
+│ │ • "Create a React component for user profile"  │ │
+│ │ • "Generate unit tests for this class"         │ │
+│ │                                                 │ │
+│ │ [Send] [Cancel]                                │ │
+│ └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 2.1.2 Context Menu Integration
+```
+┌─────────────────────────────────┐
+│ Right-click Context Menu        │
+├─────────────────────────────────┤
+│ Cut                    Ctrl+X   │
+│ Copy                   Ctrl+C   │
+│ Paste                  Ctrl+V   │
+├─────────────────────────────────┤
+│ 🤖 Generate with AI    Ctrl+I   │  ← New option
+│ Refactor...                     │
+│ Source Action...                │
+├─────────────────────────────────┤
+│ Go to Definition       F12      │
+│ Go to References       Shift+F12│
+└─────────────────────────────────┘
+```
+
+### 2.2 Input Interface
+
+#### 2.2.1 Instruction Input Panel
+```
+┌─────────────────────────────────────────────────────┐
+│ 🤖 Agent Mode - Natural Language Code Generation   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 📝 Instruction Input                               │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Create a function that validates email          │ │
+│ │ addresses and returns true for valid emails     │ │
+│ │ █                                               │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🎯 Context: JavaScript • function scope            │
+│ 📁 File: src/utils/validation.js                   │
+│                                                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │
+│ │ 🚀 Generate │ │ 💡 Suggest  │ │ ❌ Cancel   │     │
+│ └─────────────┘ └─────────────┘ └─────────────┘     │
+│                                                     │
+│ 💫 Smart suggestions based on your codebase        │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 2.2.2 Multi-Line Input with Auto-Complete
+```
+┌─────────────────────────────────────────────────────┐
+│ 📝 Tell me what you want to build:                 │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Create a React component for displaying         │ │
+│ │ user profiles with the following features:      │ │
+│ │ - Avatar image                                  │ │
+│ │ - Name and title                                │ │
+│ │ - Contact information                           │ │
+│ │ - Social media links█                          │ │
+│ │                                                 │ │
+│ │ ┌─────────────────────────────────────────────┐ │ │
+│ │ │ 💡 Suggestions:                            │ │ │
+│ │ │ • Add TypeScript interfaces                 │ │ │
+│ │ │ • Include responsive design                 │ │ │
+│ │ │ • Add accessibility features                │ │ │
+│ │ └─────────────────────────────────────────────┘ │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 📊 Complexity: Medium | 🕒 Est. time: 30s          │
+└─────────────────────────────────────────────────────┘
+```
+
+### 2.3 Processing States
+
+#### 2.3.1 Analysis Phase
+```
+┌─────────────────────────────────────────────────────┐
+│ 🤖 Agent Mode - Processing Your Request            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 🧠 Analyzing your instruction...                   │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ ████████████████████████████░░░░░░░░  75%       │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ✅ Intent identified: CREATE_COMPONENT             │
+│ ✅ Context analyzed: React + TypeScript             │
+│ ✅ Dependencies checked: @types/react               │
+│ 🔄 Generating code structure...                    │
+│                                                     │
+│ 💡 This will create:                               │
+│ • UserProfile.tsx component                        │
+│ • Associated TypeScript interfaces                 │
+│ • CSS modules for styling                          │
+│                                                     │
+│ ⏱️ Estimated completion: 15 seconds                │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 2.3.2 Code Generation Phase
+```
+┌─────────────────────────────────────────────────────┐
+│ 🤖 Generating Code...                              │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 🎨 Creating UserProfile component...               │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ ████████████████████████████████████████  95%   │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ✅ Component structure created                      │
+│ ✅ TypeScript interfaces defined                    │
+│ ✅ Props validation added                           │
+│ ✅ Accessibility features included                  │
+│ 🔄 Finalizing code formatting...                   │
+│                                                     │
+│ 🎭 Preview available in 3... 2... 1...            │
+└─────────────────────────────────────────────────────┘
+```
+
+### 2.4 Code Preview and Selection
+
+#### 2.4.1 Generated Code Preview
+```
+┌─────────────────────────────────────────────────────┐
+│ 🎉 Code Generated Successfully!                    │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 📄 Generated Files (3):                            │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 📁 components/                                  │ │
+│ │   📄 UserProfile.tsx            ⭐ Primary      │ │
+│ │   📄 UserProfile.module.css     🎨 Styles      │ │
+│ │   📄 types.ts                   🔧 Types       │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 👀 Preview: UserProfile.tsx                        │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ import React from 'react';                      │ │
+│ │ import styles from './UserProfile.module.css';  │ │
+│ │ import { UserProfileProps } from './types';     │ │
+│ │                                                 │ │
+│ │ const UserProfile: React.FC<UserProfileProps>  │ │
+│ │   = ({ user, showSocialLinks = true }) => {    │ │
+│ │   return (                                      │ │
+│ │     <div className={styles.profileContainer}>  │ │
+│ │       <img                                      │ │
+│ │         src={user.avatar}                       │ │
+│ │         alt={`${user.name} avatar`}             │ │
+│ │         className={styles.avatar}               │ │
+│ │       />                                        │ │
+│ │       <div className={styles.userInfo}>        │ │
+│ │         <h2>{user.name}</h2>                    │ │
+│ │         <p>{user.title}</p>                     │ │
+│ │         {/* More code... */}                    │ │
+│ │     </div>                                      │ │
+│ │   );                                            │ │
+│ │ };                                              │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🎯 Confidence: 92% | 📊 Lines: 45 | 🧪 Tests: ✅  │
+│                                                     │
+│ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌─────┐  │
+│ │ ✅ Accept │ │ 🔧 Modify │ │ 🔄 Retry  │ │ ❌  │  │
+│ └───────────┘ └───────────┘ └───────────┘ └─────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 2.4.2 Code Comparison View
+```
+┌─────────────────────────────────────────────────────┐
+│ 🔍 Code Review & Comparison                         │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ┌──────────────────────┬──────────────────────────┐ │
+│ │ 📋 Original Code     │ ✨ Generated Code        │ │
+│ ├──────────────────────┼──────────────────────────┤ │
+│ │ function validate(   │ function validateEmail(  │ │
+│ │   email              │   email: string          │ │
+│ │ ) {                  │ ): boolean {             │ │
+│ │   // TODO: impl      │   const emailRegex =    │ │
+│ │   return true;       │     /^[^\s@]+@[^\s@]+   │ │
+│ │ }                    │     \.[^\s@]+$/;         │ │
+│ │                      │   return emailRegex      │ │
+│ │                      │     .test(email);        │ │
+│ │                      │ }                        │ │
+│ └──────────────────────┴──────────────────────────┘ │
+│                                                     │
+│ 📈 Improvements:                                    │
+│ • ✅ Added TypeScript type annotations              │
+│ • ✅ Implemented email validation logic             │
+│ • ✅ Added comprehensive regex pattern              │
+│ • ✅ Improved function naming                       │
+│                                                     │
+│ 🎯 Quality Score: A+ | 🛡️ Security: Safe          │
+└─────────────────────────────────────────────────────┘
+```
+
+### 2.5 Interactive Refinement
+
+#### 2.5.1 Modification Interface
+```
+┌─────────────────────────────────────────────────────┐
+│ 🔧 Refine Generated Code                           │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 💬 What would you like to change?                  │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Add JSDoc comments and make the avatar optional │ │
+│ │ █                                               │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🎨 Quick Actions:                                   │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │
+│ │ 📝 Add Docs │ │ 🧪 Add Tests│ │ 🎨 Styling  │     │
+│ └─────────────┘ └─────────────┘ └─────────────┘     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │
+│ │ 🔧 Refactor │ │ ⚡ Optimize │ │ 🛡️ Security │     │
+│ └─────────────┘ └─────────────┘ └─────────────┘     │
+│                                                     │
+│ 📋 Current Selection: Lines 15-25                  │
+│ 🎯 Context: UserProfile component                   │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 2.5.2 Iterative Conversation
+```
+┌─────────────────────────────────────────────────────┐
+│ 💬 Conversation History                             │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 👤 You: Create a React component for user profiles │
+│                                                     │
+│ 🤖 Assistant: I've created a UserProfile component │
+│              with avatar, name, title, and contact │
+│              information. The component includes... │
+│                                                     │
+│ 👤 You: Add JSDoc comments and make avatar optional│
+│                                                     │
+│ 🤖 Assistant: ✅ Updated! I've added comprehensive │
+│              JSDoc documentation and made the       │
+│              avatar prop optional with a default   │
+│              placeholder. The changes include...    │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 💭 Continue the conversation...                 │ │
+│ │ █                                               │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🔄 Session: 3 iterations | ⏱️ Total time: 2:15    │
+└─────────────────────────────────────────────────────┘
+```
+
+## 3. User Experience Flows
+
+### 3.1 Primary User Journey
+
+#### 3.1.1 Quick Code Generation Flow
+```
+Start → Ctrl+I → Type Instruction → Generate → Review → Accept
+  ↓        ↓           ↓              ↓         ↓        ↓
+ 2s       5s         10s            15s       20s      22s
+```
+
+#### 3.1.2 Iterative Refinement Flow
+```
+Start → Generate → Review → Modify → Refine → Review → Accept
+  ↓        ↓         ↓        ↓        ↓        ↓        ↓
+ 2s      15s       20s      25s      35s      40s     42s
+```
+
+### 3.2 Error Handling UX
+
+#### 3.2.1 Ambiguous Instruction
+```
+┌─────────────────────────────────────────────────────┐
+│ ⚠️  Need More Information                           │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ Your instruction: "create a button"                 │
+│                                                     │
+│ 🤔 I need clarification to generate the best code: │
+│                                                     │
+│ ❓ What type of button?                             │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │
+│ │ React Comp  │ │ HTML Button │ │ Custom CSS  │     │
+│ └─────────────┘ └─────────────┘ └─────────────┘     │
+│                                                     │
+│ ❓ What should it do?                               │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Handle clicks, submit form, navigate, etc...    │ │
+│ │ █                                               │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 💡 Or try a more specific instruction like:        │
+│ "Create a React submit button with loading state"  │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 3.2.2 Error Recovery
+```
+┌─────────────────────────────────────────────────────┐
+│ ❌ Oops! Something went wrong                       │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 🚨 Code generation failed                           │
+│                                                     │
+│ The AI model encountered an issue while processing  │
+│ your request. This might be due to:                 │
+│                                                     │
+│ • Complex instruction requiring clarification       │
+│ • Temporary service unavailability                  │
+│ • Insufficient context information                  │
+│                                                     │
+│ 🔄 What would you like to do?                      │
+│                                                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │
+│ │ 🔄 Retry    │ │ ✏️ Rephrase │ │ 🆘 Get Help │     │
+│ └─────────────┘ └─────────────┘ └─────────────┘     │
+│                                                     │
+│ 📧 Error ID: AGM-2024-001 (for support reference)  │
+└─────────────────────────────────────────────────────┘
+```
+
+## 4. Accessibility Features
+
+### 4.1 Keyboard Navigation
+- Full keyboard navigation support
+- Custom keyboard shortcuts
+- Screen reader compatibility
+- High contrast mode support
+
+### 4.2 Visual Accessibility
+```
+┌─────────────────────────────────────────────────────┐
+│ 🎨 Agent Mode (High Contrast)                      │
+├═════════════════════════════════════════════════════┤
+│                                                     │
+│ ██ Instruction Input                               │
+│ ╔═══════════════════════════════════════════════╗ ││
+│ ║ Create a function that validates email        ║ ││
+│ ║ █                                             ║ ││
+│ ╚═══════════════════════════════════════════════╝ ││
+│                                                     │
+│ ⚡ Context: JavaScript • function scope            │
+│ 📂 File: src/utils/validation.js                   │
+│                                                     │
+│ ╔═════════════╗ ╔═════════════╗ ╔═════════════╗     │
+│ ║ >> Generate ║ ║ ?? Suggest  ║ ║ XX Cancel   ║     │
+│ ╚═════════════╝ ╚═════════════╝ ╚═════════════╝     │
+└─────────────────────────────────────────────────────┘
+```
+
+### 4.3 Screen Reader Support
+- Semantic HTML structure
+- ARIA labels and descriptions
+- Progress announcements
+- Error message announcements
+
+## 5. Responsive Design
+
+### 5.1 Panel Sizing
+- Adaptive panel width (min: 400px, max: 800px)
+- Collapsible sections for smaller screens
+- Responsive text and button sizing
+- Mobile-friendly touch targets
+
+### 5.2 Layout Variations
+```
+Desktop Layout:
+┌─────────────────┬─────────────────────────┐
+│   File Tree     │    Agent Mode Panel     │
+│                 │                         │
+│                 │  [Instruction Input]    │
+│   Code Editor   │  [Processing Status]    │
+│                 │  [Code Preview]         │
+│                 │  [Action Buttons]       │
+└─────────────────┴─────────────────────────┘
+
+Compact Layout:
+┌─────────────────────────────────────────┐
+│            Code Editor                  │
+├─────────────────────────────────────────┤
+│        Agent Mode Panel (Overlay)      │
+│     [Instruction Input]                 │
+│     [Quick Actions]                     │
+└─────────────────────────────────────────┘
+```
+
+## 6. Performance Considerations
+
+### 6.1 UI Performance
+- Virtual scrolling for large code previews
+- Debounced input handling
+- Progressive rendering of results
+- Optimized re-renders
+
+### 6.2 User Feedback
+- Immediate visual feedback (<100ms)
+- Progress indicators for long operations
+- Background processing indicators
+- Cancellation capabilities
+
+## 7. Dark Mode Integration
+
+### 7.1 Theme Consistency
+```
+Dark Mode Agent Panel:
+┌─────────────────────────────────────────────────────┐
+│ 🌙 Agent Mode                          [🔧][❌]   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 📝 Instruction Input                               │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Create a dark theme toggle component            │ │
+│ │ █                                               │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🎯 Context: React • TypeScript                     │
+│                                                     │
+│ Background: #1e1e1e                                │
+│ Text: #d4d4d4                                       │
+│ Accent: #007acc                                     │
+│ Success: #4ec9b0                                    │
+│ Warning: #dcdcaa                                    │
+│ Error: #f44747                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+This comprehensive UI/UX design provides a solid foundation for implementing an intuitive and powerful Agent Mode interface that seamlessly integrates with VS Code while providing an exceptional user experience for natural language code generation.
+EOF (exit 0)
+Now let me create the API design document for proprietary model integration.
+$ cat > docs/api-design-proprietary-models.md << 'EOF'
+# API Design for Proprietary Model Integration
+
+## 1. Overview
+
+This document outlines the API design for integrating Cursor's proprietary AI models with the Agent Mode feature. The API provides a secure, scalable, and efficient interface for natural language to code generation, supporting various model capabilities and ensuring optimal performance.
+
+## 2. Architecture Overview
+
+### 2.1 High-Level Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Agent Mode    │    │   API Gateway    │    │  Model Cluster  │
+│   Client        │◄──►│   & Router       │◄──►│   & Inference   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+        │                       │                       │
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Local Cache   │    │   Auth & Rate    │    │  Model Manager  │
+│   & Context     │    │   Limiting       │    │  & Load Balancer│
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+### 2.2 API Layers
+
+#### 2.2.1 Client SDK Layer
+- TypeScript/JavaScript SDK for VS Code integration
+- Request/response handling and serialization
+- Caching and offline support
+- Error handling and retry logic
+
+#### 2.2.2 API Gateway Layer
+- Request routing and load balancing
+- Authentication and authorization
+- Rate limiting and quota management
+- Request/response transformation
+
+#### 2.2.3 Model Service Layer
+- Model selection and routing
+- Inference request processing
+- Result post-processing
+- Performance monitoring
+
+## 3. API Specifications
+
+### 3.1 Base API Configuration
+
+```typescript
+interface APIConfig {
+  baseUrl: string;
+  version: string;
+  apiKey: string;
+  userAgent: string;
+  timeout: number;
+  retryAttempts: number;
+}
+
+const defaultConfig: APIConfig = {
+  baseUrl: 'https://api.cursor.so',
+  version: 'v1',
+  apiKey: process.env.CURSOR_API_KEY,
+  userAgent: 'cursor-agent-mode/1.0.0',
+  timeout: 30000,
+  retryAttempts: 3
+};
+```
+
+### 3.2 Authentication
+
+#### 3.2.1 API Key Authentication
+```typescript
+interface AuthRequest {
+  apiKey: string;
+  timestamp: number;
+  signature: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  permissions: string[];
+}
+```
+
+#### 3.2.2 Token Management
+```typescript
+interface TokenManager {
+  getAccessToken(): Promise<string>;
+  refreshToken(): Promise<string>;
+  isTokenValid(): boolean;
+  invalidateToken(): void;
+}
+```
+
+### 3.3 Core API Endpoints
+
+#### 3.3.1 Code Generation Endpoint
+
+**POST /v1/generate/code**
+
+```typescript
+interface CodeGenerationRequest {
+  // Required fields
+  instruction: string;
+  context: CodeContext;
+  
+  // Optional fields
+  language?: string;
+  framework?: string;
+  modelPreference?: ModelType;
+  temperature?: number; // 0.0 to 1.0
+  maxTokens?: number;
+  
+  // Generation options
+  options: GenerationOptions;
+  
+  // Request metadata
+  sessionId?: string;
+  requestId: string;
+  timestamp: number;
+}
+
+interface CodeContext {
+  currentFile: {
+    path: string;
+    language: string;
+    content: string;
+    cursorPosition: Position;
+    selection?: TextRange;
+  };
+  
+  projectContext: {
+    rootPath: string;
+    packageJson?: any;
+    gitBranch?: string;
+    dependencies?: string[];
+  };
+  
+  relatedFiles: Array<{
+    path: string;
+    relevanceScore: number;
+    content?: string;
+    summary?: string;
+  }>;
+  
+  symbols: Array<{
+    name: string;
+    type: SymbolType;
+    definition: string;
+    usage: string[];
+  }>;
+}
+
+interface GenerationOptions {
+  includeTests?: boolean;
+  includeDocumentation?: boolean;
+  includeTypeAnnotations?: boolean;
+  codeStyle?: 'compact' | 'readable' | 'enterprise';
+  errorHandling?: 'minimal' | 'comprehensive' | 'production';
+  performance?: 'standard' | 'optimized';
+}
+
+interface CodeGenerationResponse {
+  // Generated content
+  code: string;
+  explanation: string;
+  
+  // Metadata
+  confidence: number; // 0.0 to 1.0
+  modelUsed: string;
+  processingTime: number;
+  tokenCount: number;
+  
+  // Additional outputs
+  alternativeOptions?: Array<{
+    code: string;
+    explanation: string;
+    confidence: number;
+  }>;
+  
+  suggestions?: string[];
+  warnings?: string[];
+  requiredImports?: string[];
+  
+  // Request tracking
+  requestId: string;
+  timestamp: number;
+}
+```
+
+#### 3.3.2 Code Refinement Endpoint
+
+**POST /v1/refine/code**
+
+```typescript
+interface CodeRefinementRequest {
+  originalCode: string;
+  instruction: string;
+  context: CodeContext;
+  previousIterations?: RefinementHistory[];
+  
+  refinementType: 'modify' | 'optimize' | 'fix' | 'document' | 'test';
+  targetAreas?: string[]; // Specific functions, classes, or lines
+  
+  requestId: string;
+  sessionId?: string;
+}
+
+interface RefinementHistory {
+  iteration: number;
+  instruction: string;
+  code: string;
+  timestamp: number;
+}
+
+interface CodeRefinementResponse {
+  refinedCode: string;
+  changes: Array<{
+    type: 'addition' | 'deletion' | 'modification';
+    location: TextRange;
+    description: string;
+    oldCode?: string;
+    newCode?: string;
+  }>;
+  
+  explanation: string;
+  confidence: number;
+  
+  requestId: string;
+  timestamp: number;
+}
+```
+
+#### 3.3.3 Model Health Check
+
+**GET /v1/health**
+
+```typescript
+interface HealthCheckResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: number;
+  
+  models: Array<{
+    id: string;
+    name: string;
+    status: 'available' | 'busy' | 'offline';
+    avgResponseTime: number;
+    successRate: number;
+  }>;
+  
+  systemInfo: {
+    version: string;
+    uptime: number;
+    activeConnections: number;
+    queueLength: number;
+  };
+}
+```
+
+### 3.4 Streaming API
+
+#### 3.4.1 Server-Sent Events for Real-time Updates
+
+**POST /v1/generate/stream**
+
+```typescript
+interface StreamingRequest {
+  instruction: string;
+  context: CodeContext;
+  options: GenerationOptions & {
+    streamChunkSize?: number;
+    includeProgress?: boolean;
+  };
+}
+
+interface StreamingResponse {
+  type: 'progress' | 'partial' | 'complete' | 'error';
+  data: StreamingData;
+  timestamp: number;
+  requestId: string;
+}
+
+type StreamingData = 
+  | ProgressData
+  | PartialCodeData
+  | CompleteCodeData
+  | ErrorData;
+
+interface ProgressData {
+  stage: 'analyzing' | 'generating' | 'refining' | 'validating';
+  progress: number; // 0-100
+  message: string;
+  estimatedTimeRemaining?: number;
+}
+
+interface PartialCodeData {
+  codeChunk: string;
+  position: number;
+  totalExpectedLength?: number;
+  confidence: number;
+}
+
+interface CompleteCodeData {
+  code: string;
+  explanation: string;
+  confidence: number;
+  metadata: any;
+}
+
+interface ErrorData {
+  error: string;
+  errorCode: string;
+  retryAfter?: number;
+}
+```
+
+## 4. Client SDK Implementation
+
+### 4.1 Main SDK Class
+
+```typescript
+class CursorAgentAPI {
+  private config: APIConfig;
+  private tokenManager: TokenManager;
+  private cache: CacheManager;
+  private rateLimiter: RateLimiter;
+
+  constructor(config: Partial<APIConfig>) {
+    this.config = { ...defaultConfig, ...config };
+    this.tokenManager = new TokenManager(this.config);
+    this.cache = new CacheManager();
+    this.rateLimiter = new RateLimiter();
+  }
+
+  async generateCode(request: CodeGenerationRequest): Promise<CodeGenerationResponse> {
+    // Implementation with retry logic, caching, and error handling
+  }
+
+  async refineCode(request: CodeRefinementRequest): Promise<CodeRefinementResponse> {
+    // Implementation for code refinement
+  }
+
+  async generateCodeStream(
+    request: StreamingRequest,
+    onProgress: (data: StreamingResponse) => void
+  ): Promise<void> {
+    // Streaming implementation
+  }
+
+  async healthCheck(): Promise<HealthCheckResponse> {
+    // Health check implementation
+  }
+}
+```
+
+### 4.2 Request/Response Handling
+
+```typescript
+class RequestHandler {
+  private static async makeRequest<T>(
+    endpoint: string,
+    method: string,
+    data?: any,
+    options?: RequestOptions
+  ): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options?.timeout || 30000);
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await this.getAccessToken()}`,
+          'User-Agent': this.config.userAgent,
+          ...options?.headers,
+        },
+        body: data ? JSON.stringify(data) : undefined,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new APIError(response.status, await response.text());
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw this.handleError(error);
+    }
+  }
+}
+```
+
+## 5. Error Handling
+
+### 5.1 Error Types and Codes
+
+```typescript
+enum APIErrorCode {
+  // Authentication errors
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
+  INVALID_API_KEY = 'INVALID_API_KEY',
+  
+  // Request errors
+  BAD_REQUEST = 'BAD_REQUEST',
+  INVALID_INSTRUCTION = 'INVALID_INSTRUCTION',
+  MISSING_CONTEXT = 'MISSING_CONTEXT',
+  
+  // Rate limiting
+  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+  
+  // Service errors
+  MODEL_UNAVAILABLE = 'MODEL_UNAVAILABLE',
+  INFERENCE_FAILED = 'INFERENCE_FAILED',
+  TIMEOUT = 'TIMEOUT',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  
+  // Network errors
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  CONNECTION_TIMEOUT = 'CONNECTION_TIMEOUT',
+}
+
+interface APIError extends Error {
+  code: APIErrorCode;
+  statusCode?: number;
+  details?: any;
+  retryAfter?: number;
+  requestId?: string;
+}
+
+class APIErrorHandler {
+  static handle(error: any): APIError {
+    // Error classification and transformation logic
+  }
+
+  static isRetryableError(error: APIError): boolean {
+    const retryableCodes = [
+      APIErrorCode.TIMEOUT,
+      APIErrorCode.NETWORK_ERROR,
+      APIErrorCode.MODEL_UNAVAILABLE,
+      APIErrorCode.INTERNAL_ERROR,
+    ];
+    return retryableCodes.includes(error.code);
+  }
+}
+```
+
+### 5.2 Retry Logic
+
+```typescript
+class RetryHandler {
+  static async withRetry<T>(
+    operation: () => Promise<T>,
+    maxAttempts: number = 3,
+    backoffMs: number = 1000
+  ): Promise<T> {
+    let lastError: APIError;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = APIErrorHandler.handle(error);
+
+        if (attempt === maxAttempts || !APIErrorHandler.isRetryableError(lastError)) {
+          throw lastError;
+        }
+
+        const delay = backoffMs * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw lastError!;
+  }
+}
+```
+
+## 6. Performance Optimizations
+
+### 6.1 Caching Strategy
+
+```typescript
+interface CacheConfig {
+  maxSize: number;
+  ttl: number; // Time to live in milliseconds
+  maxAge: number;
+}
+
+class CacheManager {
+  private cache: Map<string, CacheEntry>;
+  private config: CacheConfig;
+
+  constructor(config: CacheConfig) {
+    this.config = config;
+    this.cache = new Map();
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    const entry = this.cache.get(key);
+    if (!entry || this.isExpired(entry)) {
+      return null;
+    }
+    return entry.value;
+  }
+
+  set<T>(key: string, value: T, customTtl?: number): void {
+    const ttl = customTtl || this.config.ttl;
+    this.cache.set(key, {
+      value,
+      timestamp: Date.now(),
+      ttl,
+    });
+
+    // Clean up if cache exceeds max size
+    if (this.cache.size > this.config.maxSize) {
+      this.evictOldest();
+    }
+  }
+
+  private generateCacheKey(request: CodeGenerationRequest): string {
+    // Generate deterministic cache key based on request content
+    const keyData = {
+      instruction: request.instruction,
+      language: request.language,
+      contextHash: this.hashContext(request.context),
+      options: request.options,
+    };
+    return Buffer.from(JSON.stringify(keyData)).toString('base64');
+  }
+}
+```
+
+### 6.2 Request Deduplication
+
+```typescript
+class RequestDeduplicator {
+  private pendingRequests: Map<string, Promise<any>>;
+
+  constructor() {
+    this.pendingRequests = new Map();
+  }
+
+  async deduplicate<T>(key: string, operation: () => Promise<T>): Promise<T> {
+    if (this.pendingRequests.has(key)) {
+      return this.pendingRequests.get(key) as Promise<T>;
+    }
+
+    const promise = operation()
+      .finally(() => {
+        this.pendingRequests.delete(key);
+      });
+
+    this.pendingRequests.set(key, promise);
+    return promise;
+  }
+}
+```
+
+## 7. Rate Limiting and Quotas
+
+### 7.1 Rate Limiter Implementation
+
+```typescript
+interface RateLimitConfig {
+  requestsPerMinute: number;
+  requestsPerHour: number;
+  requestsPerDay: number;
+  tokensPerMinute: number;
+  tokensPerHour: number;
+}
+
+class RateLimiter {
+  private windows: Map<string, TimeWindow>;
+  private config: RateLimitConfig;
+
+  async checkLimits(request: CodeGenerationRequest): Promise<void> {
+    const now = Date.now();
+    const limits = [
+      { window: 'minute', limit: this.config.requestsPerMinute, duration: 60000 },
+      { window: 'hour', limit: this.config.requestsPerHour, duration: 3600000 },
+      { window: 'day', limit: this.config.requestsPerDay, duration: 86400000 },
+    ];
+
+    for (const { window, limit, duration } of limits) {
+      const count = this.getRequestCount(window, now, duration);
+      if (count >= limit) {
+        throw new APIError(
+          APIErrorCode.RATE_LIMIT_EXCEEDED,
+          `Rate limit exceeded for ${window}`,
+          429
+        );
+      }
+    }
+
+    this.recordRequest(now);
+  }
+}
+```
+
+## 8. Security Considerations
+
+### 8.1 Request Signing
+
+```typescript
+class RequestSigner {
+  static sign(request: any, apiKey: string): string {
+    const timestamp = Date.now();
+    const payload = JSON.stringify({ ...request, timestamp });
+    const signature = crypto
+      .createHmac('sha256', apiKey)
+      .update(payload)
+      .digest('hex');
+    
+    return signature;
+  }
+
+  static verify(request: any, signature: string, apiKey: string): boolean {
+    const expectedSignature = this.sign(request, apiKey);
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    );
+  }
+}
+```
+
+### 8.2 Data Sanitization
+
+```typescript
+class DataSanitizer {
+  static sanitizeContext(context: CodeContext): CodeContext {
+    return {
+      ...context,
+      currentFile: {
+        ...context.currentFile,
+        content: this.removeSecrets(context.currentFile.content),
+      },
+      relatedFiles: context.relatedFiles.map(file => ({
+        ...file,
+        content: file.content ? this.removeSecrets(file.content) : undefined,
+      })),
+    };
+  }
+
+  private static removeSecrets(content: string): string {
+    // Remove API keys, passwords, and other sensitive data
+    return content
+      .replace(/api_key\s*=\s*['"][^'"]+['"]/gi, "api_key='***'")
+      .replace(/password\s*=\s*['"][^'"]+['"]/gi, "password='***'")
+      .replace(/secret\s*=\s*['"][^'"]+['"]/gi, "secret='***'");
+  }
+}
+```
+
+## 9. Monitoring and Analytics
+
+### 9.1 Request Tracking
+
+```typescript
+interface RequestMetrics {
+  requestId: string;
+  timestamp: number;
+  instruction: string;
+  language?: string;
+  processingTime: number;
+  modelUsed: string;
+  tokenCount: number;
+  success: boolean;
+  errorCode?: string;
+  cacheHit: boolean;
+}
+
+class MetricsCollector {
+  static track(metrics: RequestMetrics): void {
+    // Send metrics to analytics service
+  }
+
+  static trackUsage(userId: string, feature: string): void {
+    // Track feature usage
+  }
+
+  static trackError(error: APIError, context: any): void {
+    // Track errors for monitoring and improvement
+  }
+}
+```
+
+## 10. Testing Strategy
+
+### 10.1 API Testing Framework
+
+```typescript
+class APITestFramework {
+  static async testEndpoint(
+    endpoint: string,
+    testCases: TestCase[]
+  ): Promise<TestResults> {
+    const results: TestResults = {
+      passed: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    for (const testCase of testCases) {
+      try {
+        const response = await this.executeTest(endpoint, testCase);
+        if (this.validateResponse(response, testCase.expectedResponse)) {
+          results.passed++;
+        } else {
+          results.failed++;
+          results.errors.push(`Test case ${testCase.name} failed`);
+        }
+      } catch (error) {
+        results.failed++;
+        results.errors.push(`Test case ${testCase.name} error: ${error.message}`);
+      }
+    }
+
+    return results;
+  }
+}
+```
+
+This comprehensive API design provides a robust, secure, and scalable foundation for integrating Cursor's proprietary models with the Agent Mode feature, ensuring optimal performance and user experience.
+EOF (exit 0)
+Now let me commit this progress and update the todos.
