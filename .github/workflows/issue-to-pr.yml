@@ -47,7 +47,7 @@ jobs:
         git push -u origin "$branch_name"
         
         # Create draft PR immediately
-        PR_URL=$(gh pr create --title "🚧 WIP: Implement issue #${{ github.event.issue.number }}" \
+        gh pr create --title "🚧 WIP: Implement issue #${{ github.event.issue.number }}" \
           --body "🚧 **Work in Progress** - Auto-generated implementation for issue #${{ github.event.issue.number }}.
 
         This PR implements the requirements specified in the TRD-generated issue.
@@ -58,8 +58,10 @@ jobs:
           --label "trd-generated,implementation,work-in-progress" \
           --base main \
           --head "$branch_name" \
-          --draft \
-          --json url --jq .url)
+          --draft
+          
+        # Get PR URL
+        PR_URL="https://github.com/${{ github.repository }}/pull/$(gh pr list --head $branch_name --json number --jq '.[0].number')"
         
         gh issue comment ${{ github.event.issue.number }} --body "🚧 Implementation started: $PR_URL"
         
