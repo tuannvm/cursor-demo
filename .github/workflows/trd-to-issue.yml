@@ -22,31 +22,6 @@ jobs:
         curl https://cursor.com/install -fsS | bash
         echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
-    - name: Configure git identity
-      run: |
-        git config --global user.name "cursor-bot"
-        git config --global user.email "cursor-bot@users.noreply.github.com"
-
-    - name: Setup MCP Configuration
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mkdir -p ~/.cursor
-        cat > ~/.cursor/mcp.json << 'EOF'
-        {
-          "mcpServers": {
-            "github": {
-              "url": "https://api.githubcopilot.com/mcp/",
-              "headers": {
-                "Authorization": "Bearer $GITHUB_TOKEN"
-              }
-            }
-          }
-        }
-        EOF
-        
-        # Replace placeholder with actual token
-        sed -i "s/\$GITHUB_TOKEN/$GITHUB_TOKEN/g" ~/.cursor/mcp.json
 
     - name: Generate Issues from TRD
       env:
@@ -76,34 +51,29 @@ jobs:
         REPO_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
         REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
         
-        # Run cursor agent with GitHub MCP server
+        # Run cursor agent to create issues via GitHub CLI
         cursor-agent -p "
-        STOP! You are NOT allowed to create files, write code, or generate templates. 
+        TASK: Analyze TRD content and create GitHub issues using ONLY GitHub CLI commands.
         
-        You MUST use the GitHub MCP server to create LIVE GitHub issues in this repository: $REPO_OWNER/$REPO_NAME
+        TRD Content: $TRD_CONTENT
+        Repository: $REPO_OWNER/$REPO_NAME
         
-        TRD to analyze: $TRD_CONTENT
+        STRICT REQUIREMENTS:
+        1. Use 'gh issue create' commands ONLY - no file creation, no templates
+        2. Create issues directly in the live GitHub repository
+        3. Each issue must have: title, body, labels
+        4. After each successful 'gh issue create', output: 'CREATED_ISSUE_URL: [returned_url]'
         
-        MANDATORY ACTIONS:
-        1. Use GitHub MCP server create_issue function calls ONLY
-        2. Each call creates ONE real GitHub issue in the live repository
-        3. Function parameters: owner='$REPO_OWNER', repo='$REPO_NAME', title='Issue Title', body='Issue Description', labels=['trd-generated', 'planning']
-        4. After each successful create_issue call, output: 'CREATED_ISSUE_URL: https://github.com/$REPO_OWNER/$REPO_NAME/issues/NUMBER'
+        EXAMPLE COMMAND:
+        gh issue create --title '[PLANNING] Feature Name' --body 'Detailed description...' --label 'trd-generated,planning' --repo '$REPO_OWNER/$REPO_NAME'
         
-        EXAMPLE MCP CALL:
-        create_issue(owner='$REPO_OWNER', repo='$REPO_NAME', title='[PLANNING] LEGO Block System', body='Planning phase for LEGO block system implementation...', labels=['trd-generated', 'planning'])
+        ABSOLUTELY FORBIDDEN:
+        - Creating .md files or templates
+        - Using Write, Edit, or MultiEdit tools
+        - Generating code or documentation files
+        - Any git commits or file modifications
         
-        FORBIDDEN:
-        - Do NOT write files
-        - Do NOT create templates  
-        - Do NOT generate code
-        - Do NOT use Write, Edit, or any file tools
-        
-        REQUIRED:
-        - Call GitHub MCP create_issue function for each issue
-        - Use exact function name: create_issue
-        - Include owner, repo, title, body, and labels parameters
-        - Generate real issues that appear in GitHub UI
+        EXECUTE: Run gh issue create commands for each requirement you identify from the TRD.
         " 2>&1 | tee cursor_output.log
         
         # Extract issue URLs from cursor output and comment on PR
