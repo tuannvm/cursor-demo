@@ -43,7 +43,7 @@ jobs:
           exit 0
         fi
         
-        cursor-agent --model sonnet-4 -f --output-format text -p "Read these TRD files that were modified in the PR: $TRD_FILES. Thoroughly analyze the complete technical requirements and create a comprehensive GitHub issue for EVERY major feature, component, and requirement mentioned in these TRDs. Do not create sample issues - create actual issues for all requirements. Use: gh issue create --title '[PLANNING] Feature Name' --body 'Detailed description with acceptance criteria' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Read files with cat, head, or similar shell commands." 2>&1 | tee cursor_output.log
+        cursor-agent --model sonnet-4 -f --output-format text -p "Read these TRD files that were modified in the PR: $TRD_FILES. Thoroughly analyze the complete technical requirements and create a comprehensive GitHub issue for EVERY major feature, component, and requirement mentioned in these TRDs. Create separate issues for different phases of implementation. Use these title formats: '[PHASE-1] Feature Analysis & Design - Feature Name' for planning/design phase, '[PHASE-2] Core Implementation - Feature Name' for development phase, '[PHASE-3] Testing & Validation - Feature Name' for testing phase. Use: gh issue create --title 'appropriate phase title' --body 'Detailed description with acceptance criteria and phase-specific tasks' --label 'trd-generated,planning' --repo $REPO_OWNER/$REPO_NAME. Output 'CREATED_ISSUE_URL: [url]' after each creation. Read files with cat, head, or similar shell commands." 2>&1 | tee cursor_output.log
 
     - name: Report Results
       if: always()
