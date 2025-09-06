@@ -1,0 +1,1008 @@
+I'll help you implement GitHub issue 81. Let me start by reading the issue details and understanding the current codebase structure.
+Listed .
+
+$ gh issue view 81 (exit 0)
+Let me try listing the directory with a different approach and understand the codebase structure:
+$ ls -la (exit 0)
+
+$ pwd (exit 0)
+Let me read the existing files to understand the current project state and check the git branch structure:
+$ git branch -a (exit 0)
+Let me try to read the files using the shell command:
+$ cat README.md (exit 0)
+
+$ cat IMPLEMENTATION.md (exit 0)
+Now let me check what's in the .github directory to understand the workflow structure:
+$ find .github -type f -name "*.yml" -o -name "*.yaml" | head -10 (exit 0)
+
+$ ls -la .github/ (exit 0)
+Perfect! Now I understand the project structure. Let me analyze the issue requirements and create a comprehensive testing and validation implementation for the Terminal Command Integration system. Let me first post a progress update and then create a todo list to track the work.
+$ gh issue comment 81 --body 'Progress update: Starting comprehensive testing and validation implementation for Terminal Command Integration system. Analyzing current codebase and creating test framework structure.' (exit 0)
+Now let me analyze the existing workflow files to understand the current terminal command integration structure:
+$ cat .github/workflows/issue-to-pr.yml (exit 0)
+
+$ cat .github/labels.yml (exit 0)
+
+$ cat .github/workflows/trd-to-issue.yml (exit 0)
+Now let me check the ISSUE_TEMPLATE directory:
+$ ls -la .github/ISSUE_TEMPLATE/ (exit 0)
+
+$ find .github/ISSUE_TEMPLATE/ -name "*.md" -o -name "*.yml" | xargs -I {} sh -c 'echo "=== {} ==="; cat {}' (exit 0)
+Perfect! Now I have a complete understanding of the current system. Let me update the first todo as completed and start creating the comprehensive testing framework. Based on the issue requirements, I need to create:Now let me create the comprehensive testing and validation framework for the Terminal Command Integration system. I'll start by creating the main testing structure:
+$ mkdir -p tests/{unit,integration,security,performance,e2e} test-utils docs (exit 0)
+Let me try a different approach using shell commands to create the files:
+$ cat > package.json << 'EOF'
+{
+  "name": "terminal-command-integration-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive testing suite for Terminal Command Integration system",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit --coverage",
+    "test:integration": "jest tests/integration",
+    "test:security": "jest tests/security",
+    "test:performance": "jest tests/performance",
+    "test:e2e": "jest tests/e2e",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:security && npm run test:performance && npm run test:e2e",
+    "security-scan": "node test-utils/security-scanner.js",
+    "performance-benchmark": "node test-utils/performance-benchmark.js",
+    "coverage": "jest --coverage && open coverage/lcov-report/index.html"
+  },
+  "dependencies": {
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.6.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2",
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "shelljs": "^0.8.5",
+    "node-pty": "^1.0.0",
+    "docker-compose": "^0.24.2",
+    "axios": "^1.5.0",
+    "puppeteer": "^21.3.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.49.0",
+    "prettier": "^3.0.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.ts", "**/tests/**/*.spec.ts"],
+    "collectCoverageFrom": [
+      "src/**/*.{ts,js}",
+      "test-utils/**/*.{ts,js}",
+      "!**/*.d.ts",
+      "!**/node_modules/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 90,
+        "lines": 90,
+        "statements": 90
+      }
+    }
+  }
+}
+EOF (exit 0)
+Now let me create the TypeScript configuration and the main source structure:
+$ cat > tsconfig.json << 'EOF'
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "test-utils/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage"
+  ]
+}
+EOF (exit 0)
+
+$ mkdir -p src/{terminal,command,security,ui} (exit 0)
+Now let me create the core Terminal Command Integration system implementation files:
+$ cat > src/terminal/TerminalExecutor.ts << 'EOF'
+import { spawn, ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+
+export interface CommandExecution {
+  id: string;
+  command: string;
+  args: string[];
+  startTime: Date;
+  endTime?: Date;
+  exitCode?: number;
+  stdout: string;
+  stderr: string;
+  duration?: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface ExecutionOptions {
+  timeout?: number;
+  workingDirectory?: string;
+  environment?: Record<string, string>;
+  requireConfirmation?: boolean;
+  sandbox?: boolean;
+}
+
+export class TerminalExecutor extends EventEmitter {
+  private activeExecutions: Map<string, ChildProcess> = new Map();
+  private executionHistory: CommandExecution[] = [];
+  
+  constructor(private options: ExecutionOptions = {}) {
+    super();
+  }
+
+  async executeCommand(
+    command: string, 
+    args: string[] = [], 
+    options: ExecutionOptions = {}
+  ): Promise<CommandExecution> {
+    const executionId = this.generateExecutionId();
+    const mergedOptions = { ...this.options, ...options };
+    
+    const execution: CommandExecution = {
+      id: executionId,
+      command,
+      args,
+      startTime: new Date(),
+      stdout: '',
+      stderr: '',
+      riskLevel: this.assessRiskLevel(command, args)
+    };
+
+    // User confirmation for high-risk commands
+    if (mergedOptions.requireConfirmation && execution.riskLevel === 'high') {
+      const confirmed = await this.requestUserConfirmation(command, args);
+      if (!confirmed) {
+        throw new Error('Command execution cancelled by user');
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn(command, args, {
+        cwd: mergedOptions.workingDirectory || process.cwd(),
+        env: { ...process.env, ...mergedOptions.environment },
+        timeout: mergedOptions.timeout || 30000
+      });
+
+      this.activeExecutions.set(executionId, childProcess);
+
+      childProcess.stdout?.on('data', (data) => {
+        execution.stdout += data.toString();
+        this.emit('stdout', executionId, data.toString());
+      });
+
+      childProcess.stderr?.on('data', (data) => {
+        execution.stderr += data.toString();
+        this.emit('stderr', executionId, data.toString());
+      });
+
+      childProcess.on('close', (code) => {
+        execution.endTime = new Date();
+        execution.exitCode = code;
+        execution.duration = execution.endTime.getTime() - execution.startTime.getTime();
+        
+        this.activeExecutions.delete(executionId);
+        this.executionHistory.push(execution);
+        
+        this.emit('completed', execution);
+        
+        if (code === 0) {
+          resolve(execution);
+        } else {
+          reject(new Error(`Command failed with exit code ${code}: ${execution.stderr}`));
+        }
+      });
+
+      childProcess.on('error', (error) => {
+        this.activeExecutions.delete(executionId);
+        this.emit('error', executionId, error);
+        reject(error);
+      });
+
+      // Handle timeout
+      setTimeout(() => {
+        if (this.activeExecutions.has(executionId)) {
+          childProcess.kill('SIGTERM');
+          reject(new Error(`Command timeout after ${mergedOptions.timeout}ms`));
+        }
+      }, mergedOptions.timeout || 30000);
+    });
+  }
+
+  private generateExecutionId(): string {
+    return `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private assessRiskLevel(command: string, args: string[]): 'low' | 'medium' | 'high' | 'critical' {
+    const riskPatterns = {
+      critical: ['rm -rf', 'dd if=', 'mkfs', 'fdisk', 'format', 'shutdown', 'reboot'],
+      high: ['sudo', 'su', 'chmod 777', 'chown', 'rm', 'mv', 'cp /etc/'],
+      medium: ['git push', 'npm publish', 'docker run', 'kubectl apply'],
+      low: ['ls', 'cat', 'echo', 'pwd', 'which', 'grep', 'find']
+    };
+
+    const fullCommand = `${command} ${args.join(' ')}`.toLowerCase();
+
+    for (const [level, patterns] of Object.entries(riskPatterns)) {
+      if (patterns.some(pattern => fullCommand.includes(pattern))) {
+        return level as any;
+      }
+    }
+
+    return 'low';
+  }
+
+  private async requestUserConfirmation(command: string, args: string[]): Promise<boolean> {
+    // In a real implementation, this would show a UI prompt
+    // For testing, we'll use a simple console prompt
+    console.log(`⚠️  High-risk command detected: ${command} ${args.join(' ')}`);
+    return new Promise((resolve) => {
+      // Simulate user confirmation - in real implementation would be UI based
+      setTimeout(() => resolve(true), 1000);
+    });
+  }
+
+  getExecutionHistory(): CommandExecution[] {
+    return [...this.executionHistory];
+  }
+
+  getActiveExecutions(): string[] {
+    return Array.from(this.activeExecutions.keys());
+  }
+
+  terminateExecution(executionId: string): boolean {
+    const childProcess = this.activeExecutions.get(executionId);
+    if (childProcess) {
+      childProcess.kill('SIGTERM');
+      this.activeExecutions.delete(executionId);
+      return true;
+    }
+    return false;
+  }
+}
+EOF (exit 0)
+
+$ cat > src/command/CommandCategorizer.ts << 'EOF'
+export interface CommandCategory {
+  name: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  requiresConfirmation: boolean;
+  allowedInSandbox: boolean;
+  description: string;
+}
+
+export interface CommandAnalysis {
+  category: CommandCategory;
+  confidence: number;
+  reasons: string[];
+  recommendations: string[];
+}
+
+export class CommandCategorizer {
+  private categories: Map<string, CommandCategory> = new Map();
+
+  constructor() {
+    this.initializeCategories();
+  }
+
+  private initializeCategories(): void {
+    const categories: CommandCategory[] = [
+      {
+        name: 'file-system-read',
+        riskLevel: 'low',
+        requiresConfirmation: false,
+        allowedInSandbox: true,
+        description: 'Read-only file system operations'
+      },
+      {
+        name: 'file-system-write',
+        riskLevel: 'medium',
+        requiresConfirmation: true,
+        allowedInSandbox: true,
+        description: 'File system modifications'
+      },
+      {
+        name: 'system-admin',
+        riskLevel: 'critical',
+        requiresConfirmation: true,
+        allowedInSandbox: false,
+        description: 'System administration commands'
+      },
+      {
+        name: 'network',
+        riskLevel: 'medium',
+        requiresConfirmation: true,
+        allowedInSandbox: true,
+        description: 'Network operations'
+      },
+      {
+        name: 'development',
+        riskLevel: 'low',
+        requiresConfirmation: false,
+        allowedInSandbox: true,
+        description: 'Development tools and utilities'
+      },
+      {
+        name: 'package-management',
+        riskLevel: 'medium',
+        requiresConfirmation: true,
+        allowedInSandbox: true,
+        description: 'Package installation and management'
+      }
+    ];
+
+    categories.forEach(category => {
+      this.categories.set(category.name, category);
+    });
+  }
+
+  analyzeCommand(command: string, args: string[] = []): CommandAnalysis {
+    const fullCommand = `${command} ${args.join(' ')}`.toLowerCase().trim();
+    
+    // File system read operations
+    if (this.matchesPatterns(fullCommand, ['ls', 'cat', 'head', 'tail', 'grep', 'find', 'locate', 'which', 'pwd', 'wc', 'file', 'stat'])) {
+      return this.createAnalysis('file-system-read', 0.9, 
+        ['Command performs read-only file operations'],
+        ['Safe to execute without confirmation']
+      );
+    }
+
+    // File system write operations
+    if (this.matchesPatterns(fullCommand, ['mkdir', 'touch', 'cp', 'mv', 'ln', 'echo >', 'tee'])) {
+      return this.createAnalysis('file-system-write', 0.8,
+        ['Command modifies file system'],
+        ['Review destination paths', 'Ensure backup if needed']
+      );
+    }
+
+    // System administration
+    if (this.matchesPatterns(fullCommand, ['sudo', 'su', 'rm -rf', 'chmod 777', 'chown', 'systemctl', 'service', 'mount', 'umount', 'fdisk'])) {
+      return this.createAnalysis('system-admin', 0.95,
+        ['Command requires elevated privileges or modifies system'],
+        ['Verify command necessity', 'Check for potential system impact']
+      );
+    }
+
+    // Network operations
+    if (this.matchesPatterns(fullCommand, ['curl', 'wget', 'ssh', 'scp', 'rsync', 'ping', 'netstat', 'nc', 'telnet'])) {
+      return this.createAnalysis('network', 0.85,
+        ['Command performs network operations'],
+        ['Verify destination URLs/IPs', 'Check for sensitive data transmission']
+      );
+    }
+
+    // Development tools
+    if (this.matchesPatterns(fullCommand, ['git', 'node', 'python', 'java', 'gcc', 'make', 'cmake', 'mvn', 'gradle'])) {
+      return this.createAnalysis('development', 0.8,
+        ['Command uses development tools'],
+        ['Review code changes if applicable']
+      );
+    }
+
+    // Package management
+    if (this.matchesPatterns(fullCommand, ['npm', 'yarn', 'pip', 'apt', 'yum', 'brew', 'cargo', 'composer'])) {
+      return this.createAnalysis('package-management', 0.9,
+        ['Command manages packages or dependencies'],
+        ['Verify package sources', 'Check for version conflicts']
+      );
+    }
+
+    // Default to development category for unknown commands
+    return this.createAnalysis('development', 0.3,
+      ['Command not recognized, defaulting to development category'],
+      ['Manual review recommended', 'Verify command safety']
+    );
+  }
+
+  private matchesPatterns(command: string, patterns: string[]): boolean {
+    return patterns.some(pattern => 
+      command.startsWith(pattern) || 
+      command.includes(` ${pattern}`) ||
+      command.includes(`${pattern} `)
+    );
+  }
+
+  private createAnalysis(categoryName: string, confidence: number, reasons: string[], recommendations: string[]): CommandAnalysis {
+    const category = this.categories.get(categoryName);
+    if (!category) {
+      throw new Error(`Unknown category: ${categoryName}`);
+    }
+
+    return {
+      category,
+      confidence,
+      reasons,
+      recommendations
+    };
+  }
+
+  getCategories(): CommandCategory[] {
+    return Array.from(this.categories.values());
+  }
+}
+EOF (exit 0)
+
+$ cat > src/security/SecurityValidator.ts << 'EOF'
+import { CommandAnalysis } from '../command/CommandCategorizer';
+
+export interface SecurityCheck {
+  name: string;
+  description: string;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  passed: boolean;
+  message: string;
+}
+
+export interface SecurityValidationResult {
+  isValid: boolean;
+  score: number; // 0-100, higher is better
+  checks: SecurityCheck[];
+  recommendations: string[];
+}
+
+export class SecurityValidator {
+  private blacklistedCommands = new Set([
+    'rm -rf /',
+    'dd if=/dev/zero',
+    'format c:',
+    'mkfs.ext4',
+    'fdisk /dev/sda',
+    'shutdown -h now',
+    'init 0',
+    'halt',
+    'reboot'
+  ]);
+
+  private suspiciousPatterns = [
+    /curl.*\|.*sh/i,  // Pipe curl to shell
+    /wget.*\|.*sh/i,  // Pipe wget to shell
+    /eval.*\$/i,      // Dynamic evaluation
+    /exec.*\$/i,      // Dynamic execution
+    /\$\(.*\)/i,      // Command substitution
+    /`.*`/i,          // Backtick command substitution
+    /;\s*(rm|dd|format)/i, // Command chaining with dangerous commands
+    /&&\s*(rm|dd|format)/i // Command chaining with dangerous commands
+  ];
+
+  validateCommand(command: string, args: string[], analysis: CommandAnalysis): SecurityValidationResult {
+    const checks: SecurityCheck[] = [];
+    const recommendations: string[] = [];
+    
+    const fullCommand = `${command} ${args.join(' ')}`.trim();
+
+    // Check 1: Blacklisted commands
+    const blacklistCheck = this.checkBlacklist(fullCommand);
+    checks.push(blacklistCheck);
+    if (!blacklistCheck.passed) {
+      recommendations.push('This command is explicitly blacklisted due to high risk');
+    }
+
+    // Check 2: Suspicious patterns
+    const suspiciousCheck = this.checkSuspiciousPatterns(fullCommand);
+    checks.push(suspiciousCheck);
+    if (!suspiciousCheck.passed) {
+      recommendations.push('Command contains suspicious patterns that may indicate security risks');
+    }
+
+    // Check 3: Privilege escalation
+    const privilegeCheck = this.checkPrivilegeEscalation(fullCommand);
+    checks.push(privilegeCheck);
+    if (!privilegeCheck.passed) {
+      recommendations.push('Command attempts privilege escalation - verify necessity');
+    }
+
+    // Check 4: File system safety
+    const fileSystemCheck = this.checkFileSystemSafety(fullCommand);
+    checks.push(fileSystemCheck);
+    if (!fileSystemCheck.passed) {
+      recommendations.push('Command may modify critical system files');
+    }
+
+    // Check 5: Network security
+    const networkCheck = this.checkNetworkSecurity(fullCommand);
+    checks.push(networkCheck);
+    if (!networkCheck.passed) {
+      recommendations.push('Network command detected - verify destination safety');
+    }
+
+    // Check 6: Command injection
+    const injectionCheck = this.checkCommandInjection(fullCommand);
+    checks.push(injectionCheck);
+    if (!injectionCheck.passed) {
+      recommendations.push('Potential command injection detected');
+    }
+
+    // Calculate security score
+    const passedChecks = checks.filter(check => check.passed).length;
+    const totalChecks = checks.length;
+    const baseScore = (passedChecks / totalChecks) * 100;
+    
+    // Apply category-based scoring
+    const categoryMultiplier = this.getCategoryScoreMultiplier(analysis.category.riskLevel);
+    const score = Math.round(baseScore * categoryMultiplier);
+
+    const isValid = score >= 70 && !checks.some(check => check.severity === 'critical' && !check.passed);
+
+    return {
+      isValid,
+      score,
+      checks,
+      recommendations
+    };
+  }
+
+  private checkBlacklist(command: string): SecurityCheck {
+    const isBlacklisted = Array.from(this.blacklistedCommands).some(blacklisted => 
+      command.toLowerCase().includes(blacklisted.toLowerCase())
+    );
+
+    return {
+      name: 'blacklist-check',
+      description: 'Verify command is not explicitly blacklisted',
+      severity: isBlacklisted ? 'critical' : 'info',
+      passed: !isBlacklisted,
+      message: isBlacklisted ? 'Command contains blacklisted patterns' : 'No blacklisted patterns detected'
+    };
+  }
+
+  private checkSuspiciousPatterns(command: string): SecurityCheck {
+    const matchedPatterns = this.suspiciousPatterns.filter(pattern => pattern.test(command));
+    
+    return {
+      name: 'suspicious-patterns',
+      description: 'Check for suspicious command patterns',
+      severity: matchedPatterns.length > 0 ? 'warning' : 'info',
+      passed: matchedPatterns.length === 0,
+      message: matchedPatterns.length > 0 
+        ? `Suspicious patterns detected: ${matchedPatterns.length} matches`
+        : 'No suspicious patterns detected'
+    };
+  }
+
+  private checkPrivilegeEscalation(command: string): SecurityCheck {
+    const escalationKeywords = ['sudo', 'su -', 'doas', 'pkexec'];
+    const hasEscalation = escalationKeywords.some(keyword => command.toLowerCase().includes(keyword));
+
+    return {
+      name: 'privilege-escalation',
+      description: 'Check for privilege escalation attempts',
+      severity: hasEscalation ? 'warning' : 'info',
+      passed: !hasEscalation,
+      message: hasEscalation ? 'Privilege escalation detected' : 'No privilege escalation detected'
+    };
+  }
+
+  private checkFileSystemSafety(command: string): SecurityCheck {
+    const dangerousPaths = ['/etc/', '/sys/', '/proc/', '/dev/', '/boot/', '/'];
+    const criticalOperations = ['rm', 'rmdir', 'unlink', 'truncate'];
+    
+    const hasDangerousPath = dangerousPaths.some(path => command.includes(path));
+    const hasCriticalOp = criticalOperations.some(op => command.includes(op));
+    const isDangerous = hasDangerousPath && hasCriticalOp;
+
+    return {
+      name: 'filesystem-safety',
+      description: 'Check for dangerous file system operations',
+      severity: isDangerous ? 'error' : 'info',
+      passed: !isDangerous,
+      message: isDangerous 
+        ? 'Potentially dangerous file system operation detected'
+        : 'File system operations appear safe'
+    };
+  }
+
+  private checkNetworkSecurity(command: string): SecurityCheck {
+    const networkCommands = ['curl', 'wget', 'nc', 'telnet', 'ssh', 'scp'];
+    const hasNetworkCommand = networkCommands.some(cmd => command.includes(cmd));
+    
+    // Check for insecure protocols or suspicious URLs
+    const insecurePatterns = [
+      /http:\/\/[^\/]*\.(tk|ml|ga|cf)/i,  // Suspicious TLDs
+      /\d+\.\d+\.\d+\.\d+/,  // Raw IP addresses
+      /localhost:\d+/i,      // Localhost with port
+    ];
+    
+    const hasInsecurePattern = insecurePatterns.some(pattern => pattern.test(command));
+
+    return {
+      name: 'network-security',
+      description: 'Check network command security',
+      severity: hasNetworkCommand && hasInsecurePattern ? 'warning' : 'info',
+      passed: !hasNetworkCommand || !hasInsecurePattern,
+      message: hasNetworkCommand 
+        ? (hasInsecurePattern ? 'Network command with suspicious destination' : 'Network command appears safe')
+        : 'No network commands detected'
+    };
+  }
+
+  private checkCommandInjection(command: string): SecurityCheck {
+    // Look for command injection patterns
+    const injectionPatterns = [
+      /;[\s]*[rm|dd|format|shutdown]/i,
+      /\|\|[\s]*[rm|dd|format]/i,
+      /&&[\s]*[rm|dd|format]/i,
+      /`[^`]*[rm|dd|format][^`]*`/i,
+      /\$\([^)]*[rm|dd|format][^)]*\)/i
+    ];
+
+    const hasInjection = injectionPatterns.some(pattern => pattern.test(command));
+
+    return {
+      name: 'command-injection',
+      description: 'Check for command injection attempts',
+      severity: hasInjection ? 'error' : 'info',
+      passed: !hasInjection,
+      message: hasInjection ? 'Potential command injection detected' : 'No command injection detected'
+    };
+  }
+
+  private getCategoryScoreMultiplier(riskLevel: string): number {
+    switch (riskLevel) {
+      case 'critical': return 0.5;
+      case 'high': return 0.7;
+      case 'medium': return 0.85;
+      case 'low': return 1.0;
+      default: return 0.8;
+    }
+  }
+}
+EOF (exit 0)
+Now let me create the UI confirmation system and the main integration class:
+$ cat > src/ui/ConfirmationUI.ts << 'EOF'
+import { CommandAnalysis } from '../command/CommandCategorizer';
+import { SecurityValidationResult } from '../security/SecurityValidator';
+
+export interface ConfirmationOptions {
+  timeout?: number;
+  allowSkip?: boolean;
+  showDetails?: boolean;
+}
+
+export interface ConfirmationResult {
+  confirmed: boolean;
+  skipFuture?: boolean;
+  timestamp: Date;
+  userResponse: 'approved' | 'denied' | 'timeout' | 'skip';
+}
+
+export class ConfirmationUI {
+  private confirmationHistory: Array<{
+    command: string;
+    result: ConfirmationResult;
+  }> = [];
+
+  async requestConfirmation(
+    command: string,
+    args: string[],
+    analysis: CommandAnalysis,
+    securityResult: SecurityValidationResult,
+    options: ConfirmationOptions = {}
+  ): Promise<ConfirmationResult> {
+    const fullCommand = `${command} ${args.join(' ')}`;
+    
+    console.log('🤖 Terminal Command Execution Request');
+    console.log('=====================================');
+    console.log(`Command: ${fullCommand}`);
+    console.log(`Category: ${analysis.category.name}`);
+    console.log(`Risk Level: ${analysis.category.riskLevel.toUpperCase()}`);
+    console.log(`Security Score: ${securityResult.score}/100`);
+    
+    if (options.showDetails) {
+      console.log('\n📋 Analysis Details:');
+      analysis.reasons.forEach(reason => console.log(`  • ${reason}`));
+      
+      if (securityResult.recommendations.length > 0) {
+        console.log('\n⚠️  Security Recommendations:');
+        securityResult.recommendations.forEach(rec => console.log(`  • ${rec}`));
+      }
+
+      console.log('\n🔍 Security Checks:');
+      securityResult.checks.forEach(check => {
+        const icon = check.passed ? '✅' : '❌';
+        console.log(`  ${icon} ${check.name}: ${check.message}`);
+      });
+    }
+
+    console.log('\n🎯 Do you want to execute this command?');
+    console.log('Options: (y)es, (n)o, (d)etails, (s)kip future confirmations');
+
+    // In a real implementation, this would show an interactive UI
+    // For testing purposes, we'll simulate user interaction
+    const result = await this.simulateUserInteraction(securityResult, options);
+    
+    // Store confirmation history
+    this.confirmationHistory.push({
+      command: fullCommand,
+      result
+    });
+
+    return result;
+  }
+
+  private async simulateUserInteraction(
+    securityResult: SecurityValidationResult,
+    options: ConfirmationOptions
+  ): Promise<ConfirmationResult> {
+    return new Promise((resolve) => {
+      // Simulate user decision based on security score
+      const timeout = setTimeout(() => {
+        resolve({
+          confirmed: false,
+          timestamp: new Date(),
+          userResponse: 'timeout'
+        });
+      }, options.timeout || 10000);
+
+      // Auto-approve high security score commands, deny low security score
+      setTimeout(() => {
+        clearTimeout(timeout);
+        
+        if (securityResult.score >= 90) {
+          resolve({
+            confirmed: true,
+            timestamp: new Date(),
+            userResponse: 'approved'
+          });
+        } else if (securityResult.score < 50) {
+          resolve({
+            confirmed: false,
+            timestamp: new Date(),
+            userResponse: 'denied'
+          });
+        } else {
+          // Medium security - simulate user approval 70% of the time
+          resolve({
+            confirmed: Math.random() > 0.3,
+            timestamp: new Date(),
+            userResponse: Math.random() > 0.3 ? 'approved' : 'denied'
+          });
+        }
+      }, 1000); // 1 second delay to simulate user thinking
+    });
+  }
+
+  getConfirmationHistory(): Array<{ command: string; result: ConfirmationResult }> {
+    return [...this.confirmationHistory];
+  }
+
+  getConfirmationStats(): {
+    total: number;
+    approved: number;
+    denied: number;
+    timeout: number;
+    approvalRate: number;
+  } {
+    const total = this.confirmationHistory.length;
+    const approved = this.confirmationHistory.filter(h => h.result.userResponse === 'approved').length;
+    const denied = this.confirmationHistory.filter(h => h.result.userResponse === 'denied').length;
+    const timeout = this.confirmationHistory.filter(h => h.result.userResponse === 'timeout').length;
+    
+    return {
+      total,
+      approved,
+      denied,
+      timeout,
+      approvalRate: total > 0 ? (approved / total) * 100 : 0
+    };
+  }
+}
+EOF (exit 0)
+
+$ cat > src/TerminalCommandIntegration.ts << 'EOF'
+import { TerminalExecutor, CommandExecution, ExecutionOptions } from './terminal/TerminalExecutor';
+import { CommandCategorizer, CommandAnalysis } from './command/CommandCategorizer';
+import { SecurityValidator, SecurityValidationResult } from './security/SecurityValidator';
+import { ConfirmationUI, ConfirmationResult } from './ui/ConfirmationUI';
+import { EventEmitter } from 'events';
+
+export interface IntegrationConfig {
+  requireConfirmation: boolean;
+  enableSandbox: boolean;
+  securityThreshold: number; // 0-100
+  executionTimeout: number;
+  maxConcurrentExecutions: number;
+}
+
+export interface ExecutionMetrics {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+  securityScore: number;
+  userApprovalRate: number;
+}
+
+export class TerminalCommandIntegration extends EventEmitter {
+  private executor: TerminalExecutor;
+  private categorizer: CommandCategorizer;
+  private securityValidator: SecurityValidator;
+  private confirmationUI: ConfirmationUI;
+  private metrics: ExecutionMetrics;
+
+  constructor(private config: IntegrationConfig) {
+    super();
+    
+    this.executor = new TerminalExecutor({
+      timeout: config.executionTimeout,
+      requireConfirmation: config.requireConfirmation,
+      sandbox: config.enableSandbox
+    });
+
+    this.categorizer = new CommandCategorizer();
+    this.securityValidator = new SecurityValidator();
+    this.confirmationUI = new ConfirmationUI();
+
+    this.metrics = {
+      totalExecutions: 0,
+      successfulExecutions: 0,
+      failedExecutions: 0,
+      averageExecutionTime: 0,
+      securityScore: 0,
+      userApprovalRate: 0
+    };
+
+    this.setupEventHandlers();
+  }
+
+  async executeCommand(
+    command: string, 
+    args: string[] = [], 
+    options: ExecutionOptions = {}
+  ): Promise<CommandExecution> {
+    this.emit('execution-started', { command, args });
+
+    try {
+      // Step 1: Analyze command
+      const analysis = this.categorizer.analyzeCommand(command, args);
+      this.emit('command-analyzed', analysis);
+
+      // Step 2: Security validation
+      const securityResult = this.securityValidator.validateCommand(command, args, analysis);
+      this.emit('security-validated', securityResult);
+
+      // Step 3: Check security threshold
+      if (securityResult.score < this.config.securityThreshold) {
+        throw new Error(`Command security score (${securityResult.score}) below threshold (${this.config.securityThreshold})`);
+      }
+
+      // Step 4: User confirmation if required
+      let confirmationResult: ConfirmationResult | null = null;
+      if (this.config.requireConfirmation && analysis.category.requiresConfirmation) {
+        confirmationResult = await this.confirmationUI.requestConfirmation(
+          command, args, analysis, securityResult
+        );
+        
+        if (!confirmationResult.confirmed) {
+          throw new Error('Command execution denied by user');
+        }
+      }
+
+      // Step 5: Execute command
+      const execution = await this.executor.executeCommand(command, args, options);
+      
+      // Update metrics
+      this.updateMetrics(execution, securityResult);
+      
+      this.emit('execution-completed', { execution, analysis, securityResult, confirmationResult });
+      
+      return execution;
+
+    } catch (error) {
+      this.metrics.totalExecutions++;
+      this.metrics.failedExecutions++;
+      this.emit('execution-failed', { command, args, error });
+      throw error;
+    }
+  }
+
+  async executeCommandBatch(commands: Array<{ command: string; args: string[] }>): Promise<CommandExecution[]> {
+    if (commands.length > this.config.maxConcurrentExecutions) {
+      throw new Error(`Batch size (${commands.length}) exceeds maximum concurrent executions (${this.config.maxConcurrentExecutions})`);
+    }
+
+    const results: CommandExecution[] = [];
+    
+    for (const { command, args } of commands) {
+      try {
+        const execution = await this.executeCommand(command, args);
+        results.push(execution);
+      } catch (error) {
+        // Continue with other commands even if one fails
+        this.emit('batch-command-failed', { command, args, error });
+      }
+    }
+
+    return results;
+  }
+
+  getMetrics(): ExecutionMetrics {
+    // Update user approval rate from confirmation UI
+    const confirmationStats = this.confirmationUI.getConfirmationStats();
+    this.metrics.userApprovalRate = confirmationStats.approvalRate;
+
+    return { ...this.metrics };
+  }
+
+  getExecutionHistory(): CommandExecution[] {
+    return this.executor.getExecutionHistory();
+  }
+
+  getActiveExecutions(): string[] {
+    return this.executor.getActiveExecutions();
+  }
+
+  terminateExecution(executionId: string): boolean {
+    return this.executor.terminateExecution(executionId);
+  }
+
+  updateConfig(newConfig: Partial<IntegrationConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+    this.emit('config-updated', this.config);
+  }
+
+  private setupEventHandlers(): void {
+    this.executor.on('stdout', (executionId, data) => {
+      this.emit('stdout', executionId, data);
+    });
+
+    this.executor.on('stderr', (executionId, data) => {
+      this.emit('stderr', executionId, data);
+    });
+
+    this.executor.on('completed', (execution) => {
+      this.emit('executor-completed', execution);
+    });
+
+    this.executor.on('error', (executionId, error) => {
+      this.emit('executor-error', executionId, error);
+    });
+  }
+
+  private updateMetrics(execution: CommandExecution, securityResult: SecurityValidationResult): void {
+    this.metrics.totalExecutions++;
+    
+    if (execution.exitCode === 0) {
+      this.metrics.successfulExecutions++;
+    } else {
+      this.metrics.failedExecutions++;
+    }
+
+    // Update average execution time
+    const currentAvg = this.metrics.averageExecutionTime;
+    const newTime = execution.duration || 0;
+    this.metrics.averageExecutionTime = 
+      (currentAvg * (this.metrics.totalExecutions - 1) + newTime) / this.metrics.totalExecutions;
+
+    // Update security score (running average)
+    const currentSecurityScore = this.metrics.securityScore;
+    this.metrics.securityScore = 
+      (currentSecurityScore * (this.metrics.totalExecutions - 1) + securityResult.score) / this.metrics.totalExecutions;
+  }
+}
+EOF (exit 0)
+Great! Now let me commit these core implementation files and update the todo:
